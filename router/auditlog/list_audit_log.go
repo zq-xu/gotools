@@ -8,11 +8,11 @@ import (
 	"zq-xu/helper/log"
 	"zq-xu/helper/restapi"
 	"zq-xu/helper/router/auth"
-	"zq-xu/warehouse-admin/internal/webserver/types"
+	"zq-xu/helper/store"
 )
 
 type ResponseOfAuditLog struct {
-	types.ModelBase `json:",inline"`
+	store.Model `json:",inline"`
 
 	User auth.ResponseOfUserInfo `json:"user"`
 

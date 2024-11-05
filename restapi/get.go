@@ -13,7 +13,6 @@ import (
 
 	"zq-xu/helper/restapi/response"
 	"zq-xu/helper/store"
-	"zq-xu/warehouse-admin/internal/webserver/types"
 )
 
 type DetailConf struct {
@@ -40,7 +39,7 @@ func GetDetail(ctx *gin.Context, conf *DetailConf) {
 }
 
 func getID(ctx *gin.Context) (int64, *response.ErrorInfo) {
-	id := ctx.Param(types.IDParam)
+	id := ctx.Param(IDParam)
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return 0, response.NewCommonError(response.InvalidParametersErrorCode,
