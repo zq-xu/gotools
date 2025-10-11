@@ -4,7 +4,6 @@ go 1.25.0
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.10.3
-	github.com/aws/aws-sdk-go v1.55.8
 	github.com/gin-contrib/gzip v1.2.3
 	github.com/gin-gonic/gin v1.11.0
 	github.com/gorilla/websocket v1.5.3
@@ -15,18 +14,13 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/sony/sonyflake v1.3.0
-	github.com/spf13/pflag v1.0.10
 	github.com/xuri/excelize/v2 v2.9.1
-	google.golang.org/genproto v0.0.0-20251007200510-49b9836ed3ff
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
-	cloud.google.com/go/iam v1.5.2 // indirect
-	cloud.google.com/go/longrunning v0.6.7 // indirect
-	cloud.google.com/go/spanner v1.86.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
@@ -44,7 +38,6 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
@@ -68,15 +61,12 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/arch v0.20.0 // indirect
-	golang.org/x/crypto v0.42.0 // indirect
-	golang.org/x/mod v0.27.0 // indirect
-	golang.org/x/net v0.44.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251002232023-7c0ddcbb5797 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251002232023-7c0ddcbb5797 // indirect
-	google.golang.org/grpc v1.75.1 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
+	golang.org/x/mod v0.25.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/tools v0.34.0 // indirect
+	google.golang.org/protobuf v1.36.9 // indirect
 )

@@ -1,0 +1,17 @@
+logLevel: "info"
+aesKey: "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4"
+
+databaseConfig:
+  address: "127.0.0.1"
+  port: 3306
+  username: "root"
+  password: "root"
+  database: "abc_admin"
+  logLevel: 4   # GORM log level (1=Silent, 2=Error, 3=Warn, 4=Info)
+
+routeConfig:
+  host: "0.0.0.0"
+  port: 9090
+  disableTLS: true
+  keyPath: "./server.key"
+  certPath: "./server.pem"
