@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
 
-	"zq-xu/helper/log"
+	"zq-xu/gotools/logs"
 )
 
 type client struct {
@@ -61,13 +61,13 @@ func (c *client) write(messageType int, data []byte) {
 	defer c.lock.Unlock()
 
 	if c.Socket == nil {
-		log.Logger.Warningf("socket %s/%s is closed.", c.Group, c.Id)
+		logs.Logger.Warningf("socket %s/%s is closed.", c.Group, c.Id)
 		return
 	}
 
 	err := c.Socket.WriteMessage(messageType, data)
 	if err != nil {
-		log.Logger.Errorf("socket %s/%s write message err: %s", c.Group, c.Id, err)
+		logs.Logger.Errorf("socket %s/%s write message err: %s", c.Group, c.Id, err)
 	}
 }
 
@@ -77,7 +77,7 @@ func (c *client) Close() {
 
 	err := c.Socket.Close()
 	if err != nil {
-		log.Logger.Errorf("client [%s] disconnect err: %s", c.Id, err)
+		logs.Logger.Errorf("client [%s] disconnect err: %s", c.Id, err)
 	}
 
 	c.Socket = nil

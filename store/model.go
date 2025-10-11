@@ -1,29 +1,37 @@
 package store
 
 import (
+	"fmt"
 	"time"
+	"zq-xu/gotools/utils"
 
 	"gorm.io/gorm"
-
-	"zq-xu/helper/utils"
-)
-
-var (
-	tableSet = make([]interface{}, 0)
 )
 
 type Model struct {
-	ID        int64 `gorm:"primarykey"`
+	ID        string `gorm:"primarykey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	Comment   string         `gorm:"size:512"`
+	Status    int
 }
 
+type ModelResponse struct {
+	ID        string         `json:"id"`
+	CreatedAt utils.UnixTime `json:"createdAt"`
+	UpdatedAt utils.UnixTime `json:"updatedAt"`
+
+	Comment string `json:"comment"`
+}
+
+// GenerateModel
 func GenerateModel() Model {
-	return GenerateModelWithID(utils.GenerateUUID())
+	return GenerateModelWithID(utils.GenerateStringUUID())
 }
 
-func GenerateModelWithID(id int64) Model {
+// GenerateModelWithID
+func GenerateModelWithID(id string) Model {
 	return Model{
 		ID:        id,
 		CreatedAt: time.Now(),
@@ -31,14 +39,10 @@ func GenerateModelWithID(id int64) Model {
 	}
 }
 
-func RegisterTable(m interface{}) {
-	if utils.IsInterfaceValueNil(m) {
-		return
-	}
+func (m *Model) GetID() string     { return m.ID }
+func (m *Model) GetStatus() string { return fmt.Sprintf("%d", m.Status) }
 
-	tableSet = append(tableSet, m)
-}
-
-func autoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(tableSet...)
+func (m Model) SetComment(str string) Model {
+	m.Comment = str
+	return m
 }

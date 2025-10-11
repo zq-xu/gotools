@@ -30,3 +30,7 @@ func (t *UnixTime) UnmarshalJSON(data []byte) error {
 func (t UnixTime) String() string {
 	return (time.Time)(t).String()
 }
+
+func (t UnixTime) Month() time.Month {
+	return (time.Time)(t).Month()
+}

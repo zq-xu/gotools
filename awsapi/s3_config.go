@@ -6,9 +6,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/storagegateway"
 	"github.com/spf13/pflag"
 
-	"zq-xu/helper/config"
-	"zq-xu/helper/log"
-	"zq-xu/helper/utils"
+	"zq-xu/y-travel-go/pkg/config"
+	"zq-xu/y-travel-go/pkg/logs"
+	"zq-xu/y-travel-go/pkg/utils"
 )
 
 const (
@@ -44,5 +44,5 @@ func (sc *S3Config) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (sc *S3Config) Revise() {
-	log.Logger.Infof("AWS S3Config is ACL: %v", sc.ACL)
+	logs.Logger.Infof("AWS S3Config is ACL: %v", sc.ACL)
 }

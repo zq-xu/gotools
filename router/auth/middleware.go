@@ -1,63 +1,36 @@
 package auth
 
 import (
-	"errors"
+	"context"
+	"log"
 	"net/http"
-	"strconv"
+	"strings"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/rotisserie/eris"
 
-	"zq-xu/helper/restapi/response"
-	"zq-xu/helper/store"
+	"zq-xu/gotools/apperror"
 )
 
 const (
-	AuthUserIDToken = "auth_user_id"
+	AuthAccountIDToken       = "auth_account_id"
+	AuthAccountNameToken     = "auth_account_name"
+	AuthAccountUsernameToken = "auth_account_username"
+	AuthAccountStatusToken   = "auth_account_status"
 )
 
 var (
-	Middleware *jwt.GinJWTMiddleware
-
-	gjm = &jwt.GinJWTMiddleware{
-		Key:             []byte("secret key"),
-		Timeout:         time.Hour,
-		MaxRefresh:      time.Hour,
-		IdentityKey:     "user",
-		PayloadFunc:     generatePayLoad,
-		IdentityHandler: identityHandler,
-		Authenticator:   authenticate,
-		Authorizator:    authorize,
-		LoginResponse:   loginResponse,
-		RefreshResponse: loginResponse,
-		LogoutResponse:  logoutResponse,
-		Unauthorized:    unauthorized,
-		// TokenLookup is a string in the form of "<source>:<name>" that is used
-		// to extract token from the request.
-		// Optional. Default value "header:Authorization".
-		// Possible values:
-		// - "header:<name>"
-		// - "query:<name>"
-		// - "cookie:<name>"
-		// - "param:<name>"
-		TokenLookup: "header: Authorization, query: token, cookie: jwt",
-		// TokenLookup: "query:token",
-		// TokenLookup: "cookie:token",
-
-		// TokenHeadName is a string in the header. Default value is "Bearer"
-		TokenHeadName: "Bearer",
-
-		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
-		TimeFunc: time.Now,
-	}
+	middleware    *jwt.GinJWTMiddleware
+	accountLoader func(ctx context.Context, username, password string) (AuthAccount, apperror.ErrorInfo)
 )
 
-type UserReq struct {
-	ID       string
+type LoginAccount struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
+
+	authAccount AuthAccount
 }
 
 type LoginResp struct {
@@ -70,14 +43,80 @@ type UnauthorizedResp struct {
 	Message string `json:"errorMessage"`
 }
 
-func init() {
-	Middleware, _ = jwt.New(gjm)
+func Middleware() (*jwt.GinJWTMiddleware, error) {
+	if middleware == nil {
+		return nil, eris.New("empty middleware")
+	}
+	return middleware, nil
+}
+
+// InitMiddleware
+func InitMiddleware(loader func(ctx context.Context, username, password string) (AuthAccount, apperror.ErrorInfo)) {
+	var err error
+	accountLoader = loader
+
+	middleware, err = jwt.New(&jwt.GinJWTMiddleware{
+		Key:             []byte("secret key"),
+		Timeout:         time.Hour,
+		MaxRefresh:      time.Hour * 100,
+		IdentityKey:     "account",
+		PayloadFunc:     generatePayLoad,
+		IdentityHandler: identityHandler,
+		Authenticator:   authenticate,
+		LoginResponse:   loginResponse,
+		RefreshResponse: loginResponse,
+		LogoutResponse:  logoutResponse,
+		Unauthorized:    unauthorized,
+		// TokenLookup is a string in the form of "<source>:<name>" that is used
+		// to extract token from the request.
+		// Optional. Default value "header:Authorization".
+		TokenLookup: "header: Authorization, query: token, cookie: jwt",
+		// TokenLookup: "query:token",
+		// TokenLookup: "cookie:token",
+		// TokenHeadName is a string in the header. Default value is "Bearer"
+		TokenHeadName: "Bearer",
+
+		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
+		TimeFunc: time.Now,
+	})
+	if err != nil {
+		log.Fatalf("failed to initial auth middleware")
+	}
+}
+
+func authenticate(ctx *gin.Context) (interface{}, error) {
+	account := &LoginAccount{}
+
+	err := ctx.ShouldBind(account)
+	if err != nil {
+		return "", jwt.ErrMissingLoginValues
+	}
+
+	err = validateAccount(ctx, account)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func validateAccount(ctx *gin.Context, u *LoginAccount) apperror.ErrorInfo {
+	ui, ei := accountLoader(ctx, u.Username, u.Password)
+	if ei != nil {
+		return ei
+	}
+
+	u.authAccount = ui
+	return nil
 }
 
 func generatePayLoad(data interface{}) jwt.MapClaims {
-	if v, ok := data.(*UserReq); ok {
+	if v, ok := data.(*LoginAccount); ok {
 		return jwt.MapClaims{
-			AuthUserIDToken: v.ID,
+			AuthAccountIDToken:       v.authAccount.GetID(),
+			AuthAccountNameToken:     v.authAccount.GetName(),
+			AuthAccountUsernameToken: v.authAccount.GetUsername(),
+			AuthAccountStatusToken:   v.authAccount.GetStatus(),
 		}
 	}
 
@@ -86,44 +125,25 @@ func generatePayLoad(data interface{}) jwt.MapClaims {
 
 func identityHandler(ctx *gin.Context) interface{} {
 	claims := jwt.ExtractClaims(ctx)
-	u := &UserReq{
-		ID: claims[AuthUserIDToken].(string),
-	}
-
-	ctx.Set(AuthUserIDToken, u.ID)
-	return u
-}
-
-func authenticate(ctx *gin.Context) (interface{}, error) {
-	user := &UserReq{}
-	if err := ctx.ShouldBind(user); err != nil {
-		return "", jwt.ErrMissingLoginValues
-	}
-
-	err := validateUser(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func validateUser(ctx *gin.Context, u *UserReq) error {
-	db := store.DB(ctx)
-
-	mu := &User{}
-	err := db.
-		Where("name = ? AND password = ?", u.Username, u.Password).
-		First(mu).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return jwt.ErrFailedAuthentication
-		}
-		return response.NewStorageError(response.StorageErrorCode, err)
-	}
-
-	u.ID = strconv.FormatInt(mu.ID, 10)
+	ctx.Set(AuthAccountIDToken, claims[AuthAccountIDToken].(string))
+	ctx.Set(AuthAccountNameToken, claims[AuthAccountNameToken].(string))
+	ctx.Set(AuthAccountUsernameToken, claims[AuthAccountUsernameToken].(string))
+	ctx.Set(AuthAccountStatusToken, claims[AuthAccountStatusToken].(string))
 	return nil
+}
+
+func unauthorized(ctx *gin.Context, code int, message string) {
+	if strings.Contains(strings.ToLower(message), "expired") {
+		ctx.JSON(http.StatusUnauthorized, "token expired")
+		return
+	}
+
+	ctx.JSON(code,
+		&UnauthorizedResp{
+			Code:    code,
+			Message: message,
+		},
+	)
 }
 
 func loginResponse(ctx *gin.Context, code int, token string, expire time.Time) {
@@ -136,31 +156,4 @@ func loginResponse(ctx *gin.Context, code int, token string, expire time.Time) {
 
 func logoutResponse(ctx *gin.Context, code int) {
 	ctx.JSON(http.StatusCreated, struct{}{})
-}
-
-func authorize(data interface{}, ctx *gin.Context) bool {
-	//v, ok := data.(*User)
-	//if !ok {
-	//	return false
-	//}
-	//
-	//err := validateUser(v)
-	//if err != nil {
-	//	return false
-	//}
-
-	return true
-}
-
-func unauthorized(ctx *gin.Context, code int, message string) {
-	ctx.JSON(code,
-		&UnauthorizedResp{
-			Code:    code,
-			Message: message,
-		},
-	)
-}
-
-func GetAuthUserId(ctx *gin.Context) string {
-	return ctx.GetString(AuthUserIDToken)
 }

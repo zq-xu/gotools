@@ -1,80 +1,50 @@
 package config
 
 import (
-	"flag"
 	"os"
 
-	"github.com/spf13/pflag"
+	"github.com/rotisserie/eris"
+	"sigs.k8s.io/yaml"
+
+	"zq-xu/gotools/utils"
 )
 
-type cfg interface {
-	AddFlags(fs *pflag.FlagSet)
-	Revise()
-}
+const (
+	defaultConfigFilePath = "./config.yaml"
+	configFilePathEnvKey  = "CONFIG_FILE_PATH"
+)
 
 var (
-	cfgSet = make(map[string]cfg)
+	Cfg = &Config{}
 )
 
-func RegisterCfg(n string, c cfg) {
-	_, ok := cfgSet[n]
-	if ok {
-		//log.Loggercicd.Warningf("cfg %s has already exist", n)
-		return
-	}
+type Config struct {
+	LogLevel string `yaml:"logLevel"`
+	AesKey   string `yaml:"aesKey"`
 
-	cfgSet[n] = c
+	DatabaseConfig DatabaseConfig `yaml:"databaseConfig"`
+	RouteConfig    RouteConfig    `yaml:"routeConfig"`
 }
 
-func InitConfig() {
-	InitFlag(1)
+// InitConfig
+func InitConfig() error {
+	return initConfig(Cfg)
 }
 
-func InitConfigWithSubCommand(subCommandCount int) []string {
-	subCommands := GetSubCommand(subCommandCount)
-	InitFlag(subCommandCount + 1)
-	return subCommands
+func InitCustomisedConfig(i interface{}) error {
+	return initConfig(i)
 }
 
-func InitConfigWithSingleSubCommand() string {
-	subCommands := GetSubCommand(1)
-	InitFlag(2)
-
-	if len(subCommands) < 1 {
-		return ""
+func initConfig(i interface{}) error {
+	filePath := os.Getenv(configFilePathEnvKey)
+	if filePath == "" {
+		filePath = defaultConfigFilePath
 	}
 
-	return subCommands[0]
-}
-
-func GetSingleCommand() string {
-	subCommands := GetSubCommand(1)
-	if len(subCommands) < 1 {
-		return ""
+	bs, err := utils.ReadFiles(filePath)
+	if err != nil {
+		return eris.Wrapf(err, "failed to read config file %s", filePath)
 	}
 
-	return subCommands[0]
-}
-
-func GetSubCommand(count int) []string {
-	if len(os.Args) < count {
-		return nil
-	}
-
-	subCommands := os.Args[1 : count+1]
-
-	return subCommands
-}
-
-func InitFlag(flagStartIndex int) {
-	for _, v := range cfgSet {
-		v.AddFlags(pflag.CommandLine)
-	}
-
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	_ = pflag.CommandLine.Parse(os.Args[flagStartIndex:])
-
-	for _, v := range cfgSet {
-		v.Revise()
-	}
+	return yaml.Unmarshal(bs, i)
 }

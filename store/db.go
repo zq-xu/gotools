@@ -1,15 +1,23 @@
 package store
 
 import (
-	"context"
-
-	"gorm.io/gorm"
+	"zq-xu/gotools/setup"
+	"zq-xu/gotools/store/database"
+	"zq-xu/gotools/store/gormkit"
 )
 
-func InitDatabase() {
-	InitGorm(DatabaseCfg)
+var (
+	RegisterTable = gormkit.RegisterTable
+)
+
+func init() {
+	setup.RegisterSetup("Gorm", gormkit.InitGorm)
 }
 
-func DB(ctx context.Context) *gorm.DB {
-	return gormDB.WithContext(ctx)
+func DB() database.Database {
+	return gormkit.GlobalDB
+}
+
+func SetDB(d database.Database) {
+	gormkit.GlobalDB = d
 }

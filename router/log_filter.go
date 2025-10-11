@@ -19,17 +19,17 @@ var (
 	}
 )
 
-// GetMethodFilter filter the Get request
-func GetMethodFilter(param gin.LogFormatterParams) string {
-	return methodFilterSet[param.Method]
-}
-
-func LoggerFilter(skipPaths []string, formatters ...gin.LogFormatter) gin.HandlerFunc {
+func loggerFilter(skipPaths []string) gin.HandlerFunc {
 	return gin.LoggerWithConfig(gin.LoggerConfig{
 		SkipPaths: skipPaths,
-		Formatter: FormatterMiddleWare(formatters...),
+		Formatter: FormatterMiddleWare(getMethodFilter),
 		Output:    gin.DefaultWriter,
 	})
+}
+
+// GetMethodFilter filter the Get request
+func getMethodFilter(param gin.LogFormatterParams) string {
+	return methodFilterSet[param.Method]
 }
 
 // FormatterMiddleWare is for log format

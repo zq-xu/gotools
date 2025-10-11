@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"zq-xu/helper/config"
-	"zq-xu/helper/log"
+	"zq-xu/y-travel-go/pkg/config"
+	"zq-xu/y-travel-go/pkg/logs"
 )
 
 const (
@@ -43,5 +43,5 @@ func (sc *SessionConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (sc *SessionConfig) Revise() {
-	log.Logger.Infof("AWS SessionConfig is Region: %v; Endpoint: %v", sc.Region, sc.Endpoint)
+	logs.Logger.Infof("AWS SessionConfig is Region: %v; Endpoint: %v", sc.Region, sc.Endpoint)
 }
