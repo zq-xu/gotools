@@ -1,6 +1,8 @@
-package config
+package router
 
-type RouteConfig struct {
+var RouterConfig Config
+
+type Config struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
 
@@ -13,7 +15,7 @@ type RouteConfig struct {
 	CertPath string `yaml:"certPath"`
 }
 
-func (rc *RouteConfig) OptDefalt() {
+func (rc *Config) OptDefalt() {
 	if rc.Host == "" {
 		rc.Host = "0.0.0.0"
 	}

@@ -1,7 +1,7 @@
 package store
 
 import (
-	"zq-xu/gotools/setup"
+	"zq-xu/gotools/config"
 	"zq-xu/gotools/store/database"
 	"zq-xu/gotools/store/gormkit"
 )
@@ -11,7 +11,7 @@ var (
 )
 
 func init() {
-	setup.RegisterSetup("Gorm", gormkit.InitGorm)
+	config.Register("database", &gormkit.GormConfig, gormkit.InitGorm)
 }
 
 func DB() database.Database {

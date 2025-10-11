@@ -23,6 +23,10 @@ const (
 
 var groups = make([]*APIGroup, 0)
 
+func init() {
+	config.Register("router", &RouterConfig, func() error { return nil })
+}
+
 // RegisterGroup adds the route group into the route map
 func RegisterGroup(grps ...*APIGroup) {
 	for _, grp := range grps {
@@ -37,13 +41,13 @@ func RegisterGroup(grps ...*APIGroup) {
 // StartRouter
 func StartRouter(ctx context.Context, r *gin.Engine) error {
 	srv := &http.Server{
-		Addr:    net.JoinHostPort(config.Cfg.RouteConfig.Host, fmt.Sprintf("%d", config.Cfg.RouteConfig.Port)),
+		Addr:    net.JoinHostPort(RouterConfig.Host, fmt.Sprintf("%d", RouterConfig.Port)),
 		Handler: r,
 	}
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- startServe(srv, &config.Cfg.RouteConfig)
+		errCh <- startServe(srv)
 	}()
 
 	select {
@@ -57,14 +61,14 @@ func StartRouter(ctx context.Context, r *gin.Engine) error {
 	}
 }
 
-func startServe(srv *http.Server, cfg *config.RouteConfig) error {
+func startServe(srv *http.Server) error {
 	log.Println("Starting server at", srv.Addr)
 
-	if cfg.DisableTLS {
+	if RouterConfig.DisableTLS {
 		return srv.ListenAndServe()
 	}
 
-	return srv.ListenAndServeTLS(cfg.CertPath, cfg.KeyPath)
+	return srv.ListenAndServeTLS(RouterConfig.CertPath, RouterConfig.KeyPath)
 }
 
 func shutdownServer(srv *http.Server) error {

@@ -50,8 +50,8 @@ func Middleware() (*jwt.GinJWTMiddleware, error) {
 	return middleware, nil
 }
 
-// InitMiddleware
-func InitMiddleware(loader func(ctx context.Context, username, password string) (AuthAccount, apperror.ErrorInfo)) {
+// InitAuthMiddleware
+func InitAuthMiddleware(loader func(ctx context.Context, username, password string) (AuthAccount, apperror.ErrorInfo)) {
 	var err error
 	accountLoader = loader
 

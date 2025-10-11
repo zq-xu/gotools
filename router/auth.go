@@ -10,7 +10,7 @@ import (
 
 var (
 	AuthMiddleware        = auth.Middleware
-	InitMiddleware        = auth.InitMiddleware
+	InitAuthMiddleware    = auth.InitAuthMiddleware
 	GetAccountInfoHandler = auth.GetAccountInfoHandler
 )
 

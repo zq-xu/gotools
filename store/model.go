@@ -17,14 +17,6 @@ type Model struct {
 	Status    int
 }
 
-type ModelResponse struct {
-	ID        string         `json:"id"`
-	CreatedAt utils.UnixTime `json:"createdAt"`
-	UpdatedAt utils.UnixTime `json:"updatedAt"`
-
-	Comment string `json:"comment"`
-}
-
 // GenerateModel
 func GenerateModel() Model {
 	return GenerateModelWithID(utils.GenerateStringUUID())

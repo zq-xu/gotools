@@ -7,13 +7,11 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-
-	"zq-xu/gotools/config"
 )
 
 // InitGorm
-func InitGorm(cfg *config.Config) error {
-	db, err := newGormDB(&cfg.DatabaseConfig)
+func InitGorm() error {
+	db, err := newGormDB()
 	if err != nil {
 		return eris.Wrap(err, "failed to new gorm db")
 	}
@@ -27,13 +25,13 @@ func InitGorm(cfg *config.Config) error {
 	return nil
 }
 
-func newGormDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
-	return gorm.Open(newMysqlDialector(cfg), newGormConfig(cfg))
+func newGormDB() (*gorm.DB, error) {
+	return gorm.Open(newMysqlDialector(), newGormConfig())
 }
 
-func newMysqlDialector(cfg *config.DatabaseConfig) gorm.Dialector {
+func newMysqlDialector() gorm.Dialector {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=Local&timeout=5s&readTimeout=6s",
-		cfg.Username, cfg.Password, cfg.Address, cfg.Port, cfg.DatabaseName)
+		GormConfig.Username, GormConfig.Password, GormConfig.Address, GormConfig.Port, GormConfig.DatabaseName)
 
 	return mysql.New(mysql.Config{
 		DSN:                       dsn,
@@ -46,8 +44,8 @@ func newMysqlDialector(cfg *config.DatabaseConfig) gorm.Dialector {
 	})
 }
 
-func newGormConfig(cfg *config.DatabaseConfig) *gorm.Config {
+func newGormConfig() *gorm.Config {
 	return &gorm.Config{
-		Logger: logger.Default.LogMode(cfg.LogLevel),
+		Logger: logger.Default.LogMode(GormConfig.LogLevel),
 	}
 }

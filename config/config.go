@@ -1,50 +1,73 @@
 package config
 
 import (
-	"os"
+	"fmt"
+	"sync"
 
 	"github.com/rotisserie/eris"
-	"sigs.k8s.io/yaml"
+	"github.com/spf13/viper"
 
-	"zq-xu/gotools/utils"
-)
-
-const (
-	defaultConfigFilePath = "./config.yaml"
-	configFilePathEnvKey  = "CONFIG_FILE_PATH"
+	"zq-xu/gotools/logs"
 )
 
 var (
-	Cfg = &Config{}
+	registryMu sync.Mutex
+	registry   = make([]setupItem, 0)
 )
 
-type Config struct {
-	LogLevel string `yaml:"logLevel"`
-	AesKey   string `yaml:"aesKey"`
+type setupFunc func() error
 
-	DatabaseConfig DatabaseConfig `yaml:"databaseConfig"`
-	RouteConfig    RouteConfig    `yaml:"routeConfig"`
+type setupItem struct {
+	name string
+	cfg  any
+	fn   setupFunc
 }
 
-// InitConfig
-func InitConfig() error {
-	return initConfig(Cfg)
+// Register
+func Register(name string, cfg any, fn setupFunc) {
+	registryMu.Lock()
+	defer registryMu.Unlock()
+	registry = append(registry, setupItem{name, cfg, fn})
 }
 
-func InitCustomisedConfig(i interface{}) error {
-	return initConfig(i)
-}
+// Setup
+func Setup(filename string) error {
+	v := viper.New()
+	v.SetConfigFile(filename)
 
-func initConfig(i interface{}) error {
-	filePath := os.Getenv(configFilePathEnvKey)
-	if filePath == "" {
-		filePath = defaultConfigFilePath
+	if err := v.ReadInConfig(); err != nil {
+		return eris.Wrap(err, "read config file failed.")
 	}
 
-	bs, err := utils.ReadFiles(filePath)
+	registryMu.Lock()
+	defer registryMu.Unlock()
+
+	for _, item := range registry {
+		err := loadConfig(v, item.name, item.cfg)
+		if err != nil {
+			return err
+		}
+
+		err = item.fn()
+		if err != nil {
+			return eris.Wrapf(err, "failed to setup %s", item.name)
+		}
+		logs.Logger.Infof("Succeed to init %s", item.name)
+	}
+	return nil
+}
+
+func loadConfig(v *viper.Viper, name string, value any) error {
+	sub := v.Sub(name)
+	if sub == nil {
+		fmt.Println("empty config found for ", name)
+		return nil
+	}
+
+	err := sub.Unmarshal(value)
 	if err != nil {
-		return eris.Wrapf(err, "failed to read config file %s", filePath)
+		return eris.Wrapf(err, "unmarshal config for %s failed.", name)
 	}
 
-	return yaml.Unmarshal(bs, i)
+	return nil
 }

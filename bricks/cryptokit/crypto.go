@@ -6,12 +6,16 @@ import (
 	"github.com/rotisserie/eris"
 
 	"zq-xu/gotools/config"
-	"zq-xu/gotools/setup"
 )
 
 var (
-	Crypto PasswordCrypto
+	Crypto       PasswordCrypto
+	CryptoConfig Config
 )
+
+type Config struct {
+	AesKey string
+}
 
 type PasswordCrypto interface {
 	Encrypt(plaintext []byte) (string, error)
@@ -19,11 +23,11 @@ type PasswordCrypto interface {
 }
 
 func init() {
-	setup.RegisterSetup("CryptoKit", initPasswordCrypto)
+	config.Register("crypto", &CryptoConfig, initPasswordCrypto)
 }
 
-func initPasswordCrypto(cfg *config.Config) error {
-	keyBytes, err := base64.StdEncoding.DecodeString(cfg.AesKey)
+func initPasswordCrypto() error {
+	keyBytes, err := base64.StdEncoding.DecodeString(CryptoConfig.AesKey)
 	if err != nil {
 		return eris.Wrap(err, "failed to decode aes key")
 	}
@@ -31,3 +35,7 @@ func initPasswordCrypto(cfg *config.Config) error {
 	Crypto = NewAesPasswordCrypto(keyBytes)
 	return nil
 }
+
+func Encrypt(plaintext []byte) (string, error) { return Crypto.Encrypt(plaintext) }
+
+func Decrypt(ciphertext string) (string, error) { return Crypto.Decrypt(ciphertext) }

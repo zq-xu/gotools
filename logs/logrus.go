@@ -5,32 +5,37 @@ import (
 
 	"github.com/rotisserie/eris"
 	"github.com/sirupsen/logrus"
-
-	"zq-xu/gotools/config"
 )
 
 const (
 	defaultLogrusLogLevel = logrus.InfoLevel
 )
 
-var Logger = logrus.New()
+var (
+	Logger = logrus.New()
+)
+
+var LogConfig Config
+
+type Config struct {
+	LogLevel string
+}
 
 func init() {
 	Logger.SetOutput(os.Stdout)
 	Logger.SetLevel(logrus.TraceLevel)
 	Logger.SetReportCaller(true)
 	Logger.SetFormatter(&MyFormatter{})
+
 }
 
 // InitLogger
-func InitLogger(cfg *config.Config) error {
-	level, err := getLogrusLevel(cfg.LogLevel)
+func InitLogger() error {
+	level, err := getLogrusLevel(LogConfig.LogLevel)
 	if err != nil {
 		return err
 	}
 	Logger.SetLevel(level)
-
-	Logger.Infof("Succeed to init log with level %s", Logger.Level.String())
 	return nil
 }
 

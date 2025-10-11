@@ -1,0 +1,4 @@
+sample:
+  port: 8080
+  host: "localhost"
+  debug: true

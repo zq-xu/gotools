@@ -2,11 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 
-	"zq-xu/gotools/bricks/cryptokit"
-	"zq-xu/gotools/setup"
+	"zq-xu/gotools"
 )
 
 func main() {
@@ -21,15 +19,15 @@ func main() {
 		log.Fatal("The length of the input should be less than 20")
 	}
 
-	err := setup.Setup()
+	err := gotools.Setup("config.yaml")
 	if err != nil {
 		log.Fatalf("failed to setup. %s", err)
 	}
 
-	str, err := cryptokit.Crypto.Encrypt([]byte(*input))
+	str, err := gotools.Encrypt([]byte(*input))
 	if err != nil {
 		log.Fatal("invaild str", err)
 	}
 
-	fmt.Println(str)
+	gotools.Logger.Infoln(str)
 }

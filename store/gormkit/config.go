@@ -1,10 +1,12 @@
-package config
+package gormkit
 
 import (
 	"gorm.io/gorm/logger"
 )
 
-type DatabaseConfig struct {
+var GormConfig Config
+
+type Config struct {
 	Address      string `yaml:"address"`
 	Port         int    `yaml:"port"`
 	Username     string `yaml:"username"`
