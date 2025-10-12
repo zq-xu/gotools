@@ -18,6 +18,7 @@ const (
 	AuthAccountIDToken       = "auth_account_id"
 	AuthAccountNameToken     = "auth_account_name"
 	AuthAccountUsernameToken = "auth_account_username"
+	AuthUserRolesToken       = "auth_account_roles"
 	AuthAccountStatusToken   = "auth_account_status"
 )
 
@@ -116,6 +117,7 @@ func generatePayLoad(data interface{}) jwt.MapClaims {
 			AuthAccountIDToken:       v.authAccount.GetID(),
 			AuthAccountNameToken:     v.authAccount.GetName(),
 			AuthAccountUsernameToken: v.authAccount.GetUsername(),
+			AuthUserRolesToken:       v.authAccount.GetRoles(),
 			AuthAccountStatusToken:   v.authAccount.GetStatus(),
 		}
 	}
@@ -128,6 +130,7 @@ func identityHandler(ctx *gin.Context) interface{} {
 	ctx.Set(AuthAccountIDToken, claims[AuthAccountIDToken].(string))
 	ctx.Set(AuthAccountNameToken, claims[AuthAccountNameToken].(string))
 	ctx.Set(AuthAccountUsernameToken, claims[AuthAccountUsernameToken].(string))
+	ctx.Set(AuthUserRolesToken, claims[AuthUserRolesToken].(string))
 	ctx.Set(AuthAccountStatusToken, claims[AuthAccountStatusToken].(string))
 	return nil
 }

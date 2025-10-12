@@ -27,6 +27,9 @@ var (
 
     WriteFile = utils.WriteFile
 
+    // From time.go
+    ReplaceMonth = utils.ReplaceMonth
+
     // From excel.go
     NewExcelExport = utils.NewExcelExport
 

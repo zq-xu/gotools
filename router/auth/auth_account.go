@@ -10,6 +10,7 @@ import (
 type AuthAccount interface {
 	GetID() string
 	GetUsername() string
+	GetRoles() string
 	GetName() string
 	GetStatus() string
 }
@@ -18,21 +19,23 @@ type AccountInfoResponse struct {
 	ID       string `json:"id"`
 	Username string `json:"username" description:"the username for login"`
 	Name     string `json:"name"`
+	Roles    string `json:"roles"`
 	Status   string `json:"status"`
 }
 
 // GetUserInfoHandler
 func GetAccountInfoHandler(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, getUserInfoFromToken(ctx))
+	ctx.JSON(http.StatusOK, GetUserInfoFromToken(ctx))
 }
 
-func getUserInfoFromToken(ctx *gin.Context) *AccountInfoResponse {
+func GetUserInfoFromToken(ctx *gin.Context) *AccountInfoResponse {
 	claims := jwt.ExtractClaims(ctx)
 
 	return &AccountInfoResponse{
 		ID:       claims[AuthAccountIDToken].(string),
 		Name:     claims[AuthAccountNameToken].(string),
 		Username: claims[AuthAccountUsernameToken].(string),
+		Roles:    claims[AuthUserRolesToken].(string),
 		Status:   claims[AuthAccountStatusToken].(string),
 	}
 }

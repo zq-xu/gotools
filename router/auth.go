@@ -11,6 +11,7 @@ import (
 var (
 	AuthMiddleware        = auth.Middleware
 	InitAuthMiddleware    = auth.InitAuthMiddleware
+	GetUserInfoFromToken  = auth.GetUserInfoFromToken
 	GetAccountInfoHandler = auth.GetAccountInfoHandler
 )
 

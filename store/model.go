@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zq-xu/gotools/utils"
-
 	"gorm.io/gorm"
+
+	"github.com/zq-xu/gotools/utils"
 )
 
 type Model struct {

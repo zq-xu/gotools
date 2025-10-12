@@ -17,6 +17,8 @@ var (
 
     InitAuthMiddleware = router.InitAuthMiddleware
 
+    GetUserInfoFromToken = router.GetUserInfoFromToken
+
     GetAccountInfoHandler = router.GetAccountInfoHandler
 
     // From health.go

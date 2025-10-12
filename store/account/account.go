@@ -23,7 +23,8 @@ type Account struct {
 	Username string `description:"the username for login, like: alan_123"`
 	Password string
 
-	Name string `description:"the real or nick name, like: Alan,Bob,Tommy"`
+	Name  string `description:"the real or nick name, like: Alan,Bob,Tommy"`
+	Roles string
 }
 
 func init() {
@@ -37,6 +38,7 @@ func (u *Account) TableName() string {
 func (u *Account) GetID() string       { return u.Model.GetID() }
 func (u *Account) GetUsername() string { return u.Username }
 func (u *Account) GetName() string     { return u.Name }
+func (u *Account) GetRoles() string    { return u.Roles }
 func (u *Account) GetStatus() string   { return u.Model.GetStatus() }
 
 func GetAccount(ctx context.Context, id string) (*Account, apperror.ErrorInfo) {
