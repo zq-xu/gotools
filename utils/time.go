@@ -34,3 +34,8 @@ func (t UnixTime) String() string {
 func (t UnixTime) Month() time.Month {
 	return (time.Time)(t).Month()
 }
+
+func ReplaceMonth(t *time.Time, m time.Month) *time.Time {
+	nt := time.Date(t.Year(), m, t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
+	return &nt
+}
