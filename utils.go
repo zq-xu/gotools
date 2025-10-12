@@ -71,6 +71,16 @@ var (
     IsPtrStringNotEmpty = utils.IsPtrStringNotEmpty
 
     // From pointer.go
+    OptBoolPtr = utils.OptBoolPtr
+
+    OptFloat64Ptr = utils.OptFloat64Ptr
+
+    GetInt64PtrDefaultNil = utils.GetInt64PtrDefaultNil
+
+    GetInt64PtrByStringPtrDefaultNil = utils.GetInt64PtrByStringPtrDefaultNil
+
+    GetStringFromInt64Ptr = utils.GetStringFromInt64Ptr
+
     OptStringPtr = utils.OptStringPtr
 
     OptFloat32Ptr = utils.OptFloat32Ptr

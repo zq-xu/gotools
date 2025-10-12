@@ -1,9 +1,54 @@
 package utils
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 )
+
+func OptBoolPtr(dst, src *bool) {
+	if src == nil || dst == nil {
+		return
+	}
+
+	*dst = *src
+}
+
+func OptFloat64Ptr(dst, src *float64) {
+	if src == nil || dst == nil {
+		return
+	}
+
+	*dst = *src
+}
+
+func GetInt64PtrDefaultNil(src int64) *int64 {
+	if src == 0 {
+		return nil
+	}
+
+	return &src
+}
+
+func GetInt64PtrByStringPtrDefaultNil(src *string) *int64 {
+	if src == nil {
+		return nil
+	}
+
+	dst, _ := strconv.ParseInt(*src, 10, 64)
+	if dst == 0 {
+		return nil
+	}
+
+	return &dst
+}
+
+func GetStringFromInt64Ptr(ptr *int64) string {
+	if ptr == nil {
+		return ""
+	}
+	return fmt.Sprintf("%d", *ptr)
+}
 
 func OptStringPtr(dst, src *string) {
 	if src == nil || dst == nil {
