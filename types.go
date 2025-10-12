@@ -13,6 +13,15 @@ var (
 
     NewPageResponse = types.NewPageResponse
 
+    PageNumParam = types.PageNumParam
+
+    PageSizeParam = types.PageSizeParam
+
+    FuzzySearchParam = types.FuzzySearchParam
+
+    // From constants.go
+    IDParam = types.IDParam
+
 )
 
 type (

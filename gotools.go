@@ -5,7 +5,6 @@ import (
 	"github.com/zq-xu/gotools/bricks/cryptokit"
 	"github.com/zq-xu/gotools/config"
 	"github.com/zq-xu/gotools/logs"
-	"github.com/zq-xu/gotools/router"
 	"github.com/zq-xu/gotools/store"
 )
 
@@ -31,16 +30,6 @@ var (
 	NewErrorInfoForUpdateError = apperror.NewErrorInfoForUpdateError
 	NewErrorInfoForDeleteError = apperror.NewErrorInfoForDeleteError
 	NewErrorInfoForDBGetError  = apperror.NewErrorInfoForDBGetError
-)
-
-var (
-	AuthMiddleware     = router.AuthMiddleware
-	InitAuthMiddleware = router.InitAuthMiddleware
-
-	NewRouter     = router.NewRouter
-	RegisterGroup = router.RegisterGroup
-
-	StartRouter = router.StartRouter
 )
 
 var (
