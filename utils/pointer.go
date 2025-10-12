@@ -37,22 +37,6 @@ func OptInt64Ptr(dst, src *int64) {
 	*dst = *src
 }
 
-func OptUnixTimePtr(dst, src *UnixTime) {
-	if src == nil || dst == nil {
-		return
-	}
-
-	*dst = *src
-}
-
-func OptTimePtrByUnixTimePtr(dst **time.Time, src *UnixTime) {
-	if src == nil || dst == nil {
-		return
-	}
-
-	*dst = (*time.Time)(src)
-}
-
 func OptInt64ByStringPtr(dst *int64, src *string) {
 	if src == nil || dst == nil {
 		return
@@ -131,4 +115,30 @@ func Int32FromPtr(ptr *int32) int32 {
 	}
 
 	return *ptr
+}
+
+// ----------------- OPT UnixTime ----------------- //
+func OptUnixTimePtr(dst, src *UnixTime) {
+	if src == nil || dst == nil {
+		return
+	}
+
+	*dst = *src
+}
+
+func OptTimePtrByUnixTimePtr(dst **time.Time, src *UnixTime) {
+	if src == nil || dst == nil {
+		return
+	}
+
+	*dst = (*time.Time)(src)
+}
+
+func OptTimePtrByInt64Ptr(dst **time.Time, src *int64) {
+	if src == nil || dst == nil {
+		return
+	}
+
+	t := time.UnixMilli(*src)
+	*dst = &t
 }

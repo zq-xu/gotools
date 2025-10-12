@@ -79,10 +79,6 @@ var (
 
     OptInt64Ptr = utils.OptInt64Ptr
 
-    OptUnixTimePtr = utils.OptUnixTimePtr
-
-    OptTimePtrByUnixTimePtr = utils.OptTimePtrByUnixTimePtr
-
     OptInt64ByStringPtr = utils.OptInt64ByStringPtr
 
     GetStringFromPtr = utils.GetStringFromPtr
@@ -108,6 +104,12 @@ var (
     PtrIntToInt64 = utils.PtrIntToInt64
 
     Int32FromPtr = utils.Int32FromPtr
+
+    OptUnixTimePtr = utils.OptUnixTimePtr
+
+    OptTimePtrByUnixTimePtr = utils.OptTimePtrByUnixTimePtr
+
+    OptTimePtrByInt64Ptr = utils.OptTimePtrByInt64Ptr
 
 )
 
