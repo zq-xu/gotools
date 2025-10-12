@@ -7,7 +7,6 @@ import (
 	"github.com/zq-xu/gotools/logs"
 	"github.com/zq-xu/gotools/router"
 	"github.com/zq-xu/gotools/store"
-	"github.com/zq-xu/gotools/utils"
 )
 
 var (
@@ -49,5 +48,3 @@ var (
 )
 
 type ErrorInfo = apperror.ErrorInfo
-
-type UnixTime = utils.UnixTime

@@ -20,11 +20,11 @@ type errorInfo struct {
 	err     error
 }
 
-func Errorf(err error, status int, format string, msg ...string) *errorInfo {
+func Errorf(err error, status int, format string, msg ...string) ErrorInfo {
 	return &errorInfo{status, fmt.Sprintf(format, msg), err}
 }
 
-func NewError(status int, message string, err error) *errorInfo {
+func NewError(status int, message string, err error) ErrorInfo {
 	return &errorInfo{status, message, err}
 }
 
@@ -44,7 +44,7 @@ func (ei *errorInfo) ErrorMessage() string {
 	return ei.Error()
 }
 
-func NewErrorInfoForDBGetError(err error) *errorInfo {
+func NewErrorInfoForDBGetError(err error) ErrorInfo {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return NewError(http.StatusBadRequest, "not found", err)
@@ -56,7 +56,7 @@ func NewErrorInfoForDBGetError(err error) *errorInfo {
 	return nil
 }
 
-func NewErrorInfoForUpdateError(err error) *errorInfo {
+func NewErrorInfoForUpdateError(err error) ErrorInfo {
 	if err != nil {
 		return NewError(http.StatusInternalServerError, "unexpected error during update", err)
 	}
@@ -64,7 +64,7 @@ func NewErrorInfoForUpdateError(err error) *errorInfo {
 	return nil
 }
 
-func NewErrorInfoForCreateError(err error) *errorInfo {
+func NewErrorInfoForCreateError(err error) ErrorInfo {
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return NewError(http.StatusBadRequest, "update failed", err)
@@ -76,7 +76,7 @@ func NewErrorInfoForCreateError(err error) *errorInfo {
 	return nil
 }
 
-func NewErrorInfoForDeleteError(err error) *errorInfo {
+func NewErrorInfoForDeleteError(err error) ErrorInfo {
 	if err != nil {
 		return NewError(http.StatusInternalServerError, "unexpected error during delete", err)
 	}
