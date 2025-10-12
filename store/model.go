@@ -10,7 +10,7 @@ import (
 )
 
 type Model struct {
-	ID        string `gorm:"primarykey"`
+	ID        int64 `gorm:"primarykey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -20,11 +20,11 @@ type Model struct {
 
 // GenerateModel
 func GenerateModel() Model {
-	return GenerateModelWithID(utils.GenerateStringUUID())
+	return GenerateModelWithID(utils.GenerateUUID())
 }
 
 // GenerateModelWithID
-func GenerateModelWithID(id string) Model {
+func GenerateModelWithID(id int64) Model {
 	return Model{
 		ID:        id,
 		CreatedAt: time.Now(),
@@ -32,7 +32,7 @@ func GenerateModelWithID(id string) Model {
 	}
 }
 
-func (m *Model) GetID() string     { return m.ID }
+func (m *Model) GetID() string     { return fmt.Sprintf("%d", m.ID) }
 func (m *Model) GetStatus() string { return fmt.Sprintf("%d", m.Status) }
 
 func (m Model) SetComment(str string) Model {
