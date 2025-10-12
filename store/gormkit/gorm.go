@@ -11,9 +11,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"zq-xu/gotools/apperror"
-	"zq-xu/gotools/store/database"
-	pkgTypes "zq-xu/gotools/types"
+	"github.com/zq-xu/gotools/apperror"
+	"github.com/zq-xu/gotools/store/database"
+	pkgTypes "github.com/zq-xu/gotools/types"
 )
 
 var (

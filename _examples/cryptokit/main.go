@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 
-	"zq-xu/gotools"
+	"github.com/zq-xu/gotools"
 )
 
 func main() {

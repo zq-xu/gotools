@@ -7,7 +7,7 @@ import (
 	"github.com/rotisserie/eris"
 	"github.com/spf13/viper"
 
-	"zq-xu/gotools/logs"
+	"github.com/zq-xu/gotools/logs"
 )
 
 var (

@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"zq-xu/gotools/apperror"
+	"github.com/zq-xu/gotools/apperror"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
 
-	"zq-xu/gotools/logs"
+	"github.com/zq-xu/gotools/logs"
 )
 
 type client struct {

@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rotisserie/eris"
 
-	"zq-xu/gotools/apperror"
+	"github.com/zq-xu/gotools/apperror"
 )
 
 const (

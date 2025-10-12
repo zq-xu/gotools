@@ -1,7 +1,7 @@
 package config
 
 import (
-	"zq-xu/gotools/logs"
+	"github.com/zq-xu/gotools/logs"
 )
 
 func init() {

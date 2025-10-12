@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"zq-xu/gotools/apperror"
-	"zq-xu/gotools/utils"
+	"github.com/zq-xu/gotools/apperror"
+	"github.com/zq-xu/gotools/utils"
 )
 
 const (

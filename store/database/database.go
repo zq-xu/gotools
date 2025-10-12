@@ -3,8 +3,8 @@ package database
 import (
 	"context"
 
-	"zq-xu/gotools/apperror"
-	pkgTypes "zq-xu/gotools/types"
+	"github.com/zq-xu/gotools/apperror"
+	pkgTypes "github.com/zq-xu/gotools/types"
 )
 
 //go:generate mockgen -destination=../../../../test/mocks/database_mock.go -package=mocks pkg/store/database Database

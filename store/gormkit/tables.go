@@ -3,7 +3,7 @@ package gormkit
 import (
 	"gorm.io/gorm"
 
-	"zq-xu/gotools/utils"
+	"github.com/zq-xu/gotools/utils"
 )
 
 var (

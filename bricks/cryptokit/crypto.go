@@ -5,7 +5,7 @@ import (
 
 	"github.com/rotisserie/eris"
 
-	"zq-xu/gotools/config"
+	"github.com/zq-xu/gotools/config"
 )
 
 var (

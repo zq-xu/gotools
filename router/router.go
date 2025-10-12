@@ -12,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rotisserie/eris"
 
-	"zq-xu/gotools/config"
-	"zq-xu/gotools/utils"
+	"github.com/zq-xu/gotools/config"
+	"github.com/zq-xu/gotools/utils"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"zq-xu/gotools/router/auth"
+	"github.com/zq-xu/gotools/router/auth"
 )
 
 var (

@@ -3,7 +3,7 @@ package websocket
 import (
 	"sync"
 
-	"zq-xu/gotools/logs"
+	"github.com/zq-xu/gotools/logs"
 )
 
 var GlobalManager = manager{

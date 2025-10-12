@@ -27,7 +27,7 @@ for root, dirs, files in os.walk(UTILS_PACKAGE_PATH):
 with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
     f.write("package gotools\n\n")  # 修改包名为 gotools
     f.write("// THIS FILE IS AUTO-GENERATED. DO NOT EDIT MANUALLY.\n\n")
-    f.write('import "zq-xu/gotools/utils"\n\n')  # utils 包路径
+    f.write('import "github.com/zq-xu/gotools/utils"\n\n')  # utils 包路径
     f.write("var (\n")
 
     for file, items in file_exports.items():

@@ -1,6 +1,6 @@
 package types
 
-import "zq-xu/gotools/utils"
+import "github.com/zq-xu/gotools/utils"
 
 type ModelResponse struct {
 	ID        string         `json:"id"`

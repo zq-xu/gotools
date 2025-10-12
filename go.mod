@@ -1,4 +1,4 @@
-module zq-xu/gotools
+module github.com/zq-xu/gotools
 
 go 1.25.0
 

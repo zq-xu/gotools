@@ -1,9 +1,9 @@
 package store
 
 import (
-	"zq-xu/gotools/config"
-	"zq-xu/gotools/store/database"
-	"zq-xu/gotools/store/gormkit"
+	"github.com/zq-xu/gotools/config"
+	"github.com/zq-xu/gotools/store/database"
+	"github.com/zq-xu/gotools/store/gormkit"
 )
 
 var (

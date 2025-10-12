@@ -1,8 +1,9 @@
 package main
 
 import (
-	"zq-xu/gotools"
-	"zq-xu/gotools/config"
+	"github.com/zq-xu/gotools/config"
+
+	"github.com/zq-xu/gotools"
 )
 
 var SampleConfig Config

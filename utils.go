@@ -2,7 +2,7 @@ package gotools
 
 // THIS FILE IS AUTO-GENERATED. DO NOT EDIT MANUALLY.
 
-import "zq-xu/gotools/utils"
+import "github.com/zq-xu/gotools/utils"
 
 var (
 	// From difference.go
@@ -39,6 +39,11 @@ var (
 	AsInterfaceStructure = utils.AsInterfaceStructure
 
 	IsInterfaceValueNil = utils.IsInterfaceValueNil
+
+	// From float.go
+	RoundFloat64 = utils.RoundFloat64
+
+	TruncateFloat64 = utils.TruncateFloat64
 
 	// From template.go
 	TransTemplate = utils.TransTemplate
