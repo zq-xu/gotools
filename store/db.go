@@ -27,6 +27,7 @@ var (
 	NewErrorInfoForUpdateError = gormkit.NewErrorInfoForUpdateError
 	NewErrorInfoForDeleteError = gormkit.NewErrorInfoForDeleteError
 	NewErrorInfoForGetError    = gormkit.NewErrorInfoForGetError
+	NewErrorInfoForListError   = gormkit.NewErrorInfoForListError
 	IsNotFoundError            = gormkit.IsNotFoundError
 )
 

@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/zq-xu/gotools"
+	"github.com/zq-xu/gotools/apperror"
 	"github.com/zq-xu/gotools/router"
 	"github.com/zq-xu/gotools/store"
 	"github.com/zq-xu/gotools/store/database"
@@ -30,8 +32,8 @@ func UpdateHandler[T any, P any](ctx *gin.Context, optFn func(db database.Databa
 	ctx.JSON(http.StatusCreated, struct{}{})
 }
 
-func update[T any, P any](ctx *gin.Context, id string, reqParams *P, optFn func(db database.Database, obj *T, params *P) gotools.ErrorInfo) gotools.ErrorInfo {
-	return store.DB(ctx).DoDBTransaction(func(db database.Database) gotools.ErrorInfo {
+func update[T any, P any](ctx *gin.Context, id string, reqParams *P, optFn func(db database.Database, obj *T, params *P) apperror.ErrorInfo) apperror.ErrorInfo {
+	return store.DB(ctx).DoDBTransaction(func(db database.Database) apperror.ErrorInfo {
 		obj := new(T)
 		err := db.Get(obj, id)
 		ei := store.NewErrorInfoForGetError(err)
@@ -45,7 +47,7 @@ func update[T any, P any](ctx *gin.Context, id string, reqParams *P, optFn func(
 		}
 
 		if err := db.Update(obj); err != nil {
-			return gotools.NewError(http.StatusBadRequest, "update failed", err)
+			return apperror.NewError(http.StatusBadRequest, "update failed", err)
 		}
 		return nil
 	})

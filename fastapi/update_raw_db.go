@@ -6,11 +6,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zq-xu/gotools"
-	"github.com/zq-xu/gotools/router"
-	"github.com/zq-xu/gotools/store"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/zq-xu/gotools"
+	"github.com/zq-xu/gotools/apperror"
+	"github.com/zq-xu/gotools/router"
+	"github.com/zq-xu/gotools/store"
 )
 
 func UpdateByRawGormHandler[T any, P any](ctx *gin.Context,
@@ -37,9 +39,9 @@ func UpdateByRawGormHandler[T any, P any](ctx *gin.Context,
 
 func updateByRawGorm[T any, P any](ctx context.Context, id string, reqParams *P,
 	queryFn func(*gorm.DB, string) *gorm.DB,
-	optFn func(*gorm.DB, *T, *P) gotools.ErrorInfo,
-	afterUpdateFn func(*gorm.DB, *T, *P) gotools.ErrorInfo) gotools.ErrorInfo {
-	return store.DoGormDBTransaction(store.GormDB(ctx), func(db *gorm.DB) gotools.ErrorInfo {
+	optFn func(*gorm.DB, *T, *P) apperror.ErrorInfo,
+	afterUpdateFn func(*gorm.DB, *T, *P) apperror.ErrorInfo) apperror.ErrorInfo {
+	return store.DoGormDBTransaction(store.GormDB(ctx), func(db *gorm.DB) apperror.ErrorInfo {
 		obj := new(T)
 		err := queryFn(store.GormDB(ctx), id).First(obj).Error
 		ei := store.NewErrorInfoForGetError(err)
@@ -54,7 +56,7 @@ func updateByRawGorm[T any, P any](ctx context.Context, id string, reqParams *P,
 
 		err = db.Omit(clause.Associations).Save(obj).Error
 		if err != nil {
-			return gotools.NewError(http.StatusBadRequest, "update failed", err)
+			return apperror.NewError(http.StatusBadRequest, "update failed", err)
 		}
 
 		return afterUpdateFn(db, obj, reqParams)

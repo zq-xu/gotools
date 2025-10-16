@@ -5,15 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zq-xu/gotools"
-	"github.com/zq-xu/gotools/store"
 	"gorm.io/gorm"
+
+	"github.com/zq-xu/gotools"
+	"github.com/zq-xu/gotools/apperror"
+	"github.com/zq-xu/gotools/store"
+	"github.com/zq-xu/gotools/types"
+	"github.com/zq-xu/gotools/utils"
 )
 
 func ListByRawGormHandler[T any](ctx *gin.Context,
 	queryFn func(db *gorm.DB, listParam *gotools.ListParams) *gorm.DB,
-	transFn func(count int, listParam *gotools.ListParams, listObj []T) (*gotools.PageResponse, gotools.ErrorInfo)) {
-	listParam, ei := gotools.GetListParams(ctx)
+	transFn func(count int, listParam *gotools.ListParams, listObj []T) (*types.PageResponse, apperror.ErrorInfo)) {
+	listParam, ei := types.GetListParams(ctx)
 	if ei != nil {
 		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
 		return
@@ -28,12 +32,12 @@ func ListByRawGormHandler[T any](ctx *gin.Context,
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func listByRawGorm[T any](ctx context.Context, listParam *gotools.ListParams,
-	queryFn func(db *gorm.DB, listParam *gotools.ListParams) *gorm.DB,
-	transFn func(count int, listParam *gotools.ListParams, listObj []T) (*gotools.PageResponse, gotools.ErrorInfo)) (*gotools.PageResponse, gotools.ErrorInfo) {
+func listByRawGorm[T any](ctx context.Context, listParam *types.ListParams,
+	queryFn func(db *gorm.DB, listParam *types.ListParams) *gorm.DB,
+	transFn func(count int, listParam *types.ListParams, listObj []T) (*types.PageResponse, apperror.ErrorInfo)) (*types.PageResponse, apperror.ErrorInfo) {
 	count, err := store.DB(ctx).GetCount(new(T), listParam)
 	if err != nil {
-		return nil, gotools.NewError(http.StatusBadRequest, "get count failed", err)
+		return nil, apperror.NewError(http.StatusBadRequest, "get count failed", err)
 	}
 
 	listObj := make([]T, 0)
@@ -43,25 +47,25 @@ func listByRawGorm[T any](ctx context.Context, listParam *gotools.ListParams,
 	db = store.OptPageDB(db, listParam)
 
 	if err := db.Find(&listObj).Error; err != nil {
-		return nil, gotools.NewError(http.StatusBadRequest, "load models failed", err)
+		return nil, apperror.NewError(http.StatusBadRequest, "load models failed", err)
 	}
 
 	return transFn(int(count), listParam, listObj)
 }
 
-func DefaultTransListObjToResp[T any, R any](count int, listParam *gotools.ListParams, listObj []T) (*gotools.PageResponse, gotools.ErrorInfo) {
+func DefaultTransListObjToResp[T any, R any](count int, listParam *types.ListParams, listObj []T) (*types.PageResponse, apperror.ErrorInfo) {
 	items := make([]interface{}, 0)
 
 	for _, v := range listObj {
 		r := new(R)
 
-		err := gotools.Copy(&r, &v)
+		err := utils.Copy(&r, &v)
 		if err != nil {
-			return nil, gotools.NewError(http.StatusBadRequest, "failed to copy", err)
+			return nil, apperror.NewError(http.StatusBadRequest, "failed to copy", err)
 		}
 
 		items = append(items, r)
 	}
 
-	return gotools.NewPageResponse(count, listParam.PageInfo, items), nil
+	return types.NewPageResponse(count, listParam.PageInfo, items), nil
 }

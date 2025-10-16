@@ -5,10 +5,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+
 	"github.com/zq-xu/gotools"
+	"github.com/zq-xu/gotools/apperror"
 	"github.com/zq-xu/gotools/router"
 	"github.com/zq-xu/gotools/store"
-	"gorm.io/gorm"
+	"github.com/zq-xu/gotools/utils"
 )
 
 func GetByRawGormHandler[T any, R any](ctx *gin.Context,
@@ -25,7 +28,7 @@ func GetByRawGormHandler[T any, R any](ctx *gin.Context,
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func getByRawGorm[T any, R any](ctx context.Context, id string, queryFn func(*gorm.DB, string) *gorm.DB, transFn func(obj *T) (*R, gotools.ErrorInfo)) (*R, gotools.ErrorInfo) {
+func getByRawGorm[T any, R any](ctx context.Context, id string, queryFn func(*gorm.DB, string) *gorm.DB, transFn func(obj *T) (*R, apperror.ErrorInfo)) (*R, apperror.ErrorInfo) {
 	obj := new(T)
 
 	err := queryFn(store.GormDB(ctx), id).First(obj).Error
@@ -37,12 +40,12 @@ func getByRawGorm[T any, R any](ctx context.Context, id string, queryFn func(*go
 	return transFn(obj)
 }
 
-func DefaultTransObjToResp[T any, R any](obj *T) (*R, gotools.ErrorInfo) {
+func DefaultTransObjToResp[T any, R any](obj *T) (*R, apperror.ErrorInfo) {
 	resp := new(R)
 
-	err := gotools.Copy(resp, obj)
+	err := utils.Copy(resp, obj)
 	if err != nil {
-		return nil, gotools.NewError(http.StatusBadRequest, "failed to copy", err)
+		return nil, apperror.NewError(http.StatusBadRequest, "failed to copy", err)
 	}
 	return resp, nil
 }

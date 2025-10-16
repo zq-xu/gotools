@@ -21,6 +21,13 @@ func NewErrorInfoForGetError(err error) apperror.ErrorInfo {
 	return nil
 }
 
+func NewErrorInfoForListError(err error) apperror.ErrorInfo {
+	if err != nil {
+		return apperror.NewError(http.StatusBadRequest, "unexpected error during list", err)
+	}
+	return nil
+}
+
 func IsNotFoundError(err error) bool {
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		return true

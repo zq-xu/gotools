@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/zq-xu/gotools"
+	"github.com/zq-xu/gotools/apperror"
 	"github.com/zq-xu/gotools/router"
 	"github.com/zq-xu/gotools/store"
 )
@@ -23,7 +25,7 @@ func GetHandler[T any, R any](ctx *gin.Context, transFn func(obj *T) (*R, gotool
 }
 
 func get[T any, R any](ctx context.Context, id string,
-	transFn func(obj *T) (*R, gotools.ErrorInfo)) (*R, gotools.ErrorInfo) {
+	transFn func(obj *T) (*R, apperror.ErrorInfo)) (*R, apperror.ErrorInfo) {
 	obj := new(T)
 	ei := store.NewErrorInfoForGetError(store.DB(ctx).Get(obj, id))
 	if ei != nil {

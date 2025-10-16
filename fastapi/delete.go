@@ -5,8 +5,10 @@ import (
 	"reflect"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/zq-xu/gotools"
 	"github.com/zq-xu/gotools/apperror"
+	"github.com/zq-xu/gotools/logs"
 	"github.com/zq-xu/gotools/router"
 	"github.com/zq-xu/gotools/store"
 	"github.com/zq-xu/gotools/store/database"
@@ -22,13 +24,13 @@ func DeleteHandler[T any](ctx *gin.Context, validateFn func(database.Database, *
 	}
 
 	tType := reflect.TypeOf((*T)(nil)).Elem()
-	gotools.Logger.Infof("Succeed to delete obj %s/%s", tType, id)
+	logs.Logger.Infof("Succeed to delete obj %s/%s", tType, id)
 
 	ctx.JSON(http.StatusNoContent, struct{}{})
 }
 
-func delete[T any](ctx *gin.Context, id string, validateFn func(database.Database, *T) gotools.ErrorInfo) gotools.ErrorInfo {
-	return store.DB(ctx).DoDBTransaction(func(db database.Database) gotools.ErrorInfo {
+func delete[T any](ctx *gin.Context, id string, validateFn func(database.Database, *T) apperror.ErrorInfo) apperror.ErrorInfo {
+	return store.DB(ctx).DoDBTransaction(func(db database.Database) apperror.ErrorInfo {
 		obj := new(T)
 		err := db.GetAssociations(obj, id)
 		if store.IsNotFoundError(err) {
@@ -45,7 +47,7 @@ func delete[T any](ctx *gin.Context, id string, validateFn func(database.Databas
 
 		err = db.DeleteAssociations(obj, id)
 		if err != nil {
-			return gotools.NewError(http.StatusBadRequest, "delete failed", err)
+			return apperror.NewError(http.StatusBadRequest, "delete failed", err)
 		}
 
 		return nil
