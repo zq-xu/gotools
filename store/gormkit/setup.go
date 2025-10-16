@@ -21,7 +21,8 @@ func InitGorm() error {
 		return eris.Wrap(err, "failed to auto migrate")
 	}
 
-	GlobalDB = &gormDB{db: db}
+	GormDB = db
+	GlobalDB = &gormDB{DB: db}
 	return nil
 }
 

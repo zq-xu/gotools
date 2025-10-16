@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 
 MODULE_PATH = "github.com/zq-xu/gotools"
-PACKAGES = ["utils", "router", "types"]
+PACKAGES = ["utils", "types"]
 
 def process_package(pkg_name: str):
     pkg_path = f"./{pkg_name}"

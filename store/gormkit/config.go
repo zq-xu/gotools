@@ -2,6 +2,8 @@ package gormkit
 
 import (
 	"gorm.io/gorm/logger"
+
+	"github.com/zq-xu/gotools/config"
 )
 
 var GormConfig Config
@@ -14,4 +16,8 @@ type Config struct {
 	DatabaseName string `yaml:"database"`
 
 	LogLevel logger.LogLevel `yaml:"logLevel"`
+}
+
+func init() {
+	config.Register("database", &GormConfig, InitGorm)
 }

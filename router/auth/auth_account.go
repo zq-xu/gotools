@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"strings"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
@@ -16,11 +17,11 @@ type AuthAccount interface {
 }
 
 type AccountInfoResponse struct {
-	ID       string `json:"id"`
-	Username string `json:"username" description:"the username for login"`
-	Name     string `json:"name"`
-	Roles    string `json:"roles"`
-	Status   string `json:"status"`
+	ID       string   `json:"id"`
+	Username string   `json:"username" description:"the username for login"`
+	Name     string   `json:"name"`
+	Roles    []string `json:"roles"`
+	Status   string   `json:"status"`
 }
 
 // GetUserInfoHandler
@@ -35,7 +36,7 @@ func GetUserInfoFromToken(ctx *gin.Context) *AccountInfoResponse {
 		ID:       claims[AuthAccountIDToken].(string),
 		Name:     claims[AuthAccountNameToken].(string),
 		Username: claims[AuthAccountUsernameToken].(string),
-		Roles:    claims[AuthUserRolesToken].(string),
+		Roles:    strings.Split(claims[AuthUserRolesToken].(string), ","),
 		Status:   claims[AuthAccountStatusToken].(string),
 	}
 }

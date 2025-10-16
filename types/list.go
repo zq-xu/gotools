@@ -97,7 +97,7 @@ func getPageInfo(ctx *gin.Context) (*PageInfo, apperror.ErrorInfo) {
 		}
 	}
 
-	pi.Revise()
+	pi.revise()
 	return pi, nil
 }
 
@@ -120,7 +120,7 @@ func NewPageResponse(count int, pi *PageInfo, items []interface{}) *PageResponse
 	return pr
 }
 
-func (p *PageInfo) Revise() {
+func (p *PageInfo) revise() {
 	if p.PageSize == 0 {
 		p.PageSize = defaultPageSize
 	}

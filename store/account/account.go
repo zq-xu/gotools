@@ -41,16 +41,10 @@ func (u *Account) GetName() string     { return u.Name }
 func (u *Account) GetRoles() string    { return u.Roles }
 func (u *Account) GetStatus() string   { return u.Model.GetStatus() }
 
-func GetAccount(ctx context.Context, id string) (*Account, apperror.ErrorInfo) {
-	obj := &Account{}
-	ei := apperror.NewErrorInfoForDBGetError(store.DB().Get(ctx, obj, id))
-	return obj, ei
-}
-
 func LoadLoginAccount(ctx context.Context, username, password string) (auth.AuthAccount, apperror.ErrorInfo) {
 	obj := &Account{}
 
-	err := store.DB().GetByField(ctx, obj, "username", username)
+	err := store.DB(ctx).GetByField(obj, "username", username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, apperror.NewError(http.StatusUnauthorized, "invailid accountname or passowrd", nil)

@@ -8,22 +8,37 @@ import (
 )
 
 //go:generate mockgen -destination=../../../../test/mocks/database_mock.go -package=mocks pkg/store/database Database
-
 type Database interface {
-	Create(ctx context.Context, t any) error
-	Update(ctx context.Context, t any, asc ...string) error
-	Delete(ctx context.Context, t any, id string) error
-	DeleteAssociations(ctx context.Context, t any, id string) error
+	Context(ctx context.Context) Database
 
-	Get(ctx context.Context, t any, id string) error
-	GetAssociations(ctx context.Context, t any, id string) error
-	GetByName(ctx context.Context, t any, name string) error
-	GetByField(ctx context.Context, out any, key string, value any) error
-	GetCount(ctx context.Context, t any, listParam *pkgTypes.ListParams) (int64, error)
-	List(ctx context.Context, listParam *pkgTypes.ListParams, obj any) error
+	Create(t any) error
+	Update(t any) error
+	Delete(t any, id string) error
+	DeleteAssociations(t any, id string) error
 
-	DoDBTransaction(ctx context.Context, fns ...func(db Database) apperror.ErrorInfo) apperror.ErrorInfo
-	EnsureExist(ctx context.Context, obj any, id string) apperror.ErrorInfo
-	EnsureNotExistByName(ctx context.Context, obj any, name string) apperror.ErrorInfo
-	EnsureNotExistByField(ctx context.Context, t any, key string, value any) apperror.ErrorInfo
+	Get(t any, id string) error
+	GetByName(t any, name string) error
+	GetByField(out any, key string, value any) error
+	GetByMultiFields(t any, conditions map[string]any) error
+
+	GetAssociations(t any, id string, items ...string) error
+	GetAssociationsByName(t any, name string, items ...string) error
+	GetAssociationsByField(t any, key string, value any, items ...string) error
+	GetAssociationsByMultiFields(t any, conditions map[string]any, items ...string) error
+
+	GetCount(t any, listParam *pkgTypes.ListParams) (int64, error)
+	List(listParam *pkgTypes.ListParams, obj any) error
+	ListWithCount(listParam *pkgTypes.ListParams, t any, listObj any) (int64, error)
+
+	ListAssociations(listParam *pkgTypes.ListParams, listObj any, items ...string) error
+	ListAssociationsWithCount(listParam *pkgTypes.ListParams, t any, listObj any, items ...string) (int64, error)
+
+	EnsureExist(obj any, id string) apperror.ErrorInfo
+	EnsureNotExistByName(obj any, name string) apperror.ErrorInfo
+	EnsureNotExistByField(t any, key string, value any) apperror.ErrorInfo
+
+	DoDBTransaction(fns ...func(db Database) apperror.ErrorInfo) apperror.ErrorInfo
+
+	// GetDBFields return all fields for table
+	GetDBFields(model interface{}) ([]string, error)
 }
