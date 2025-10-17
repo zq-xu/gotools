@@ -3,7 +3,7 @@ package websocket
 import (
 	"sync"
 
-	"github.com/zq-xu/gotools/logs"
+	"github.com/zq-xu/gotools/logx"
 )
 
 var GlobalManager = manager{
@@ -90,7 +90,7 @@ func (mgr *manager) Info() map[string]interface{} {
 
 // Start mgr
 func (mgr *manager) Start() {
-	logs.Logger.Errorf("websocket manage start")
+	logx.Logger.Errorf("websocket manage start")
 
 	for {
 		select {
@@ -112,8 +112,8 @@ func (mgr *manager) consumeRegister(cli *client) {
 	mgr.Lock.Lock()
 	defer mgr.Lock.Unlock()
 
-	logs.Logger.Infof("client [%s] connect", cli.Id)
-	logs.Logger.Infof("register client [%s] to group [%s]", cli.Id, cli.Group)
+	logx.Logger.Infof("client [%s] connect", cli.Id)
+	logx.Logger.Infof("register client [%s] to group [%s]", cli.Id, cli.Group)
 
 	if mgr.Group[cli.Group] == nil {
 		mgr.Group[cli.Group] = make(map[string]*client)
@@ -128,7 +128,7 @@ func (mgr *manager) consumeUnregister(cli *client) {
 	mgr.Lock.Lock()
 	defer mgr.Lock.Unlock()
 
-	logs.Logger.Infof("unregister client [%s] from group [%s]", cli.Id, cli.Group)
+	logx.Logger.Infof("unregister client [%s] from group [%s]", cli.Id, cli.Group)
 
 	groupMap, ok := mgr.Group[cli.Group]
 	if !ok {
