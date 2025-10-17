@@ -1,9 +1,9 @@
-package commands
+package cmd
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/zq-xu/gotools/cmd/commands/format"
+	"github.com/zq-xu/gotools/cmd/format"
 	"github.com/zq-xu/gotools/logx"
 )
 

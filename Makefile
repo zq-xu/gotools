@@ -1,6 +1,6 @@
 BINARY_NAME := gotools
 BUILD_DIR := bin
-MAIN_FILE := cmd/main.go
+MAIN_FILE := gotools.go
 
 .PHONY: build format
 
