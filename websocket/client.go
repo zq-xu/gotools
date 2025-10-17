@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
+
 	"github.com/zq-xu/gotools/logx"
 )
 

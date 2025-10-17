@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/zq-xu/gotools/errorx"
 	"gorm.io/gorm"
+
+	"github.com/zq-xu/gotools/errorx"
 )
 
 // Get all fields of the table

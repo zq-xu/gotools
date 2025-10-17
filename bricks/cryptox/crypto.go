@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 
 	"github.com/rotisserie/eris"
+
 	"github.com/zq-xu/gotools/configx"
 )
 

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	defaultLogrusLogLevel = logrus.InfoLevel
+	DefaultLogrusLogLevel = logrus.InfoLevel
 )
 
 var (
@@ -46,12 +46,12 @@ func SetLoggerLevel(l string) error {
 
 func getLogrusLevel(str string) (logrus.Level, error) {
 	if str == "" {
-		return defaultLogrusLogLevel, nil
+		return DefaultLogrusLogLevel, nil
 	}
 
 	l, err := logrus.ParseLevel(str)
 	if err != nil {
-		return defaultLogrusLogLevel, eris.Wrapf(err, "failed to parse logrus level from %s", str)
+		return DefaultLogrusLogLevel, eris.Wrapf(err, "failed to parse logrus level from %s", str)
 
 	}
 

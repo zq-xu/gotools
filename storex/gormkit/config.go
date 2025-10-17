@@ -1,8 +1,9 @@
 package gormkit
 
 import (
-	"github.com/zq-xu/gotools/configx"
 	"gorm.io/gorm/logger"
+
+	"github.com/zq-xu/gotools/configx"
 )
 
 var GormConfig Config
