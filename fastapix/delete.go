@@ -16,7 +16,7 @@ import (
 func DeleteHandler[T any](ctx *gin.Context, validateFn func(database.Database, *T) errorx.ErrorInfo) {
 	id := routerx.GetID(ctx)
 
-	ei := delete[T](ctx, id, validateFn)
+	ei := delete(ctx, id, validateFn)
 	if ei != nil {
 		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
 		return
