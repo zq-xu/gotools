@@ -26,7 +26,7 @@ func GetHandler[T any, R any](ctx *gin.Context, transFn func(obj *T) (*R, errorx
 func get[T any, R any](ctx context.Context, id string,
 	transFn func(obj *T) (*R, errorx.ErrorInfo)) (*R, errorx.ErrorInfo) {
 	obj := new(T)
-	ei := storex.NewErrorInfoForGetError(storex.DB(ctx).Get(obj, id))
+	ei := storex.NewErrorInfoForGetError(storex.DB(ctx).GetAssociations(obj, id))
 	if ei != nil {
 		return nil, ei
 	}

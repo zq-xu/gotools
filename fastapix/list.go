@@ -62,7 +62,7 @@ func list[T any](ctx context.Context, listParam *typesx.ListParams,
 
 func DefaultListObjWithCount[T any](db database.Database, listParam *typesx.ListParams) ([]T, int, errorx.ErrorInfo) {
 	listObj := make([]T, 0)
-	count, err := db.ListWithCount(listParam, new(T), &listObj)
+	count, err := db.ListAssociationsWithCount(listParam, new(T), &listObj)
 	if err != nil {
 		return nil, 0, errorx.NewError(http.StatusBadRequest, "failed to list", err)
 	}
