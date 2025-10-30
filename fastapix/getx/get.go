@@ -13,8 +13,9 @@ import (
 )
 
 type Config[T any, R any] struct {
-	QueryFn func(db database.Database, id string) (*T, errorx.ErrorInfo)
-	TransFn func(obj *T) (*R, errorx.ErrorInfo)
+	ValidateFn validateFn
+	QueryFn    func(db database.Database, id string) (*T, errorx.ErrorInfo)
+	TransFn    func(obj *T) (*R, errorx.ErrorInfo)
 }
 
 func (cfg *Config[T, R]) MustValidate(key string) {
@@ -47,6 +48,14 @@ func DefaultQueryObj[T any](db database.Database, id string) (*T, errorx.ErrorIn
 
 func GetHandler[T any, R any](ctx *gin.Context, cfg *Config[T, R]) {
 	id := routerx.GetID(ctx)
+
+	if cfg.ValidateFn != nil {
+		ei := cfg.ValidateFn(ctx)
+		if ei != nil {
+			ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+			return
+		}
+	}
 
 	obj, ei := cfg.QueryFn(storex.DB(ctx), id)
 	if ei != nil {
