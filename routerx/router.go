@@ -24,7 +24,7 @@ const (
 var groups = make([]*APIGroup, 0)
 
 func init() {
-	configx.Register("router", &RouterConfig, func() error { return nil })
+	configx.Register("router", &RouterConfig, configx.DefaultSetupFunc)
 }
 
 // RegisterGroup adds the route group into the route map
