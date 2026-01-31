@@ -14,19 +14,26 @@ type Task struct {
 	End      time.Time
 }
 
-func readTasksFromSheet1(f *excelize.File, sheet string) ([]Task, error) {
+// ReadTasks 从指定 Sheet 解析任务数据
+func ReadTasks(f *excelize.File, sheet string) ([]Task, error) {
 	rows, err := f.GetRows(sheet)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to get rows in sheet1")
+		return nil, eris.Wrapf(err, "failed to get rows from sheet: %s", sheet)
 	}
 
 	var tasks []Task
 	for i, row := range rows {
+		// 跳过表头或列数不足的行
 		if i == 0 || len(row) < 4 {
 			continue
 		}
-		start, _ := time.Parse(layout, row[2])
-		end, _ := time.Parse(layout, row[3])
+
+		// 假设 layout 在 gantt.go 中定义
+		start, errS := time.Parse(layout, row[2])
+		end, errE := time.Parse(layout, row[3])
+		if errS != nil || errE != nil {
+			continue // 可以在这里记录日志，跳过日期格式错误的行
+		}
 
 		tasks = append(tasks, Task{
 			LineName: row[0],

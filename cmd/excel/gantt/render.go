@@ -8,9 +8,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-// ==========================================
-// 2. GanttRenderer: 负责所有 Excel 绘图逻辑
-// ==========================================
+// GanttRenderer 负责所有 Excel 绘图逻辑
 type GanttRenderer struct {
 	f          *excelize.File
 	sheet      string
@@ -30,12 +28,12 @@ func NewGanttRenderer(f *excelize.File, sheet string, layout *TimelineLayout) *G
 }
 
 // Render 执行完整的渲染流程
-func (r *GanttRenderer) Render(tasks []Task) error {
+func (r *GanttRenderer) Render() error {
 	r.prepareStyles()
 	r.initSheet()
-	r.drawBlackWalls(len(tasks))
+	r.drawBlackWalls()
 	r.drawTimeline()
-	r.drawTasks(tasks)
+	r.drawTasks()
 	return nil
 }
 
@@ -77,11 +75,11 @@ func (r *GanttRenderer) initSheet() {
 	r.f.SetCellValue(r.sheet, "A2", "Timeline")
 }
 
-func (r *GanttRenderer) drawBlackWalls(taskCount int) {
-	maxRow := taskCount + 2
+func (r *GanttRenderer) drawBlackWalls() {
+	// 直接从 layout 获取任务数
+	maxRow := len(r.layout.Tasks) + 2
 	for _, col := range r.layout.BlackCols {
 		name, _ := excelize.ColumnNumberToName(col)
-		// 从第3行开始涂黑，避开表头
 		r.f.SetCellStyle(r.sheet, fmt.Sprintf("%s3", name), fmt.Sprintf("%s%d", name, maxRow), r.blackStyle)
 		r.f.SetColWidth(r.sheet, name, name, 0.6)
 	}
@@ -102,14 +100,13 @@ func (r *GanttRenderer) drawTimeline() {
 		t, _ := time.Parse(time.DateOnly, dStr)
 		monthLabel := fmt.Sprintf("%d月", t.Month())
 
-		// 设置日期列
 		colName, _ := excelize.ColumnNumberToName(col)
 		r.f.SetColWidth(r.sheet, colName, colName, 3.5)
+
 		cell, _ := excelize.CoordinatesToCellName(col, 2)
 		r.f.SetCellValue(r.sheet, cell, t.Day())
 		r.f.SetCellStyle(r.sheet, cell, cell, r.dateStyle)
 
-		// 月份合并逻辑
 		if lastMonth == "" {
 			monthStartCol = col
 			lastMonth = monthLabel
@@ -118,7 +115,6 @@ func (r *GanttRenderer) drawTimeline() {
 			monthStartCol = col
 			lastMonth = monthLabel
 		}
-		// 最后一个月
 		if i == len(dates)-1 {
 			r.mergeMonth(monthStartCol, col, lastMonth)
 		}
@@ -133,8 +129,9 @@ func (r *GanttRenderer) mergeMonth(start, end int, label string) {
 	r.f.SetCellStyle(r.sheet, sCell, sCell, r.monthStyle)
 }
 
-func (r *GanttRenderer) drawTasks(tasks []Task) {
-	for i, task := range tasks {
+func (r *GanttRenderer) drawTasks() {
+	// 直接从持有的 layout.Tasks 遍历
+	for i, task := range r.layout.Tasks {
 		row := i + 3
 		r.f.SetCellValue(r.sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("%s - %s", task.LineName, task.GroupID))
 

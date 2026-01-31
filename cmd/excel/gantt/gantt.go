@@ -22,34 +22,28 @@ func Gantt(filePath string) error {
 		return eris.Wrapf(err, "failed to open file %s", filePath)
 	}
 	defer f.Close()
-	logx.Logger.Infof("Loaded excel %s", filePath)
 
-	// 2. 读取原始数据
-	tasks, err := readTasksFromSheet1(f, sheet1)
+	// 2. 读取原始数据 (调用 task.go 中的函数)
+	tasks, err := ReadTasks(f, sheet1)
 	if err != nil {
 		return err
 	}
-	logx.Logger.Infof("Readed data %s", sheet1)
 
-	// 3. 初始化并构建时间轴布局逻辑 (从第2列开始)
-	layout := NewTimelineLayout(2)
-	layout.Build(tasks, 2026)
+	// 3. 构建布局对象 (TimelineLayout 现在拥有 tasks)
+	timeline := NewTimelineLayout(tasks, 2)
+	timeline.Build(2026)
 
-	logx.Logger.Info("Built timeline")
-
-	// 4. 创建渲染器并执行全流程渲染
-	// 我们将数据处理和 Excel 写入完全解耦
-	err = NewGanttRenderer(f, sheet2, layout).Render(tasks)
-	if err != nil {
+	// 4. 执行渲染 (GanttRenderer 现在只依赖 timeline)
+	renderer := NewGanttRenderer(f, sheet2, timeline)
+	if err := renderer.Render(); err != nil {
 		return eris.Wrap(err, "failed to render gantt chart")
 	}
-	logx.Logger.Infof("Rendered gantt in excel sheet %s", sheet2)
 
-	// 5. 保存结果
+	// 5. 保存
 	if err := f.SaveAs(filePath); err != nil {
 		return eris.Wrapf(err, "failed to save file %s", filePath)
 	}
 
-	logx.Logger.Infof("Saved gantt in excel sheet %s", sheet2)
+	logx.Logger.Infof("Success! Gantt generated in %s", filePath)
 	return nil
 }
