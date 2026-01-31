@@ -86,39 +86,81 @@ func (r *GanttRenderer) drawBlackWalls() {
 }
 
 func (r *GanttRenderer) drawTimeline() {
+	dates := r.getSortedDates()
+	if len(dates) == 0 {
+		return
+	}
+
+	// 1. 初始化基准：起点列、月份标识、当前列变量
+	monthStartCol := r.layout.DateToCol[dates[0]]
+	prevMonthKey := dates[0][:7] // 存储 "2026-01"
+	currCol := 0
+
+	for i, dStr := range dates {
+		currCol = r.layout.DateToCol[dStr]
+
+		// // 获取日期对象（仅用于 drawDateCell 内部获取 Day()）
+		// t, _ := time.Parse(time.DateOnly, dStr)
+		// r.drawDateCell(currCol, t)
+		// 直接传字符串，省去 time.Parse
+		r.drawDateCell(currCol, dStr)
+
+		// 2. 跨月判定：对比 "YYYY-MM" 部分
+		currMonthKey := dStr[:7]
+		if i > 0 && currMonthKey != prevMonthKey {
+			// 发生跨月：合并上个月。label 格式化为 "2026/01"
+			r.mergeMonth(monthStartCol, currCol-2, r.formatMonthLabel(prevMonthKey))
+			monthStartCol = currCol
+		}
+
+		prevMonthKey = currMonthKey
+	}
+
+	// 3. 封口：合并最后一个月
+	r.mergeMonth(monthStartCol, currCol, r.formatMonthLabel(prevMonthKey))
+}
+
+// 辅助方法：快速将 "2026-01" 转换为 "2026/01"
+func (r *GanttRenderer) formatMonthLabel(monthKey string) string {
+	// 直接字符串替换比 time.Parse 快得多
+	return monthKey[:4] + "/" + monthKey[5:7]
+}
+
+// // drawDateCell 负责日期单元格的填充、样式和列宽设置
+// func (r *GanttRenderer) drawDateCell(col int, t time.Time) {
+// 	colName, _ := excelize.ColumnNumberToName(col)
+// 	cell, _ := excelize.CoordinatesToCellName(col, 2)
+
+//		r.f.SetColWidth(r.sheet, colName, colName, 3.5)
+//		r.f.SetCellValue(r.sheet, cell, t.Day())
+//		r.f.SetCellStyle(r.sheet, cell, cell, r.dateStyle)
+//	}
+func (r *GanttRenderer) drawDateCell(col int, dStr string) {
+	colName, _ := excelize.ColumnNumberToName(col)
+	r.f.SetColWidth(r.sheet, colName, colName, 3.5)
+
+	// 拼接 Row 2 的单元格坐标
+	cell := fmt.Sprintf("%s2", colName)
+
+	// 直接从 "YYYY-MM-DD" 截取最后两位作为日期
+	dayStr := dStr[8:]
+
+	// 移除前导 0（可选）：比如 "01" 变 "1"
+	if dayStr[0] == '0' {
+		dayStr = dayStr[1:]
+	}
+
+	r.f.SetCellValue(r.sheet, cell, dayStr)
+	r.f.SetCellStyle(r.sheet, cell, cell, r.dateStyle)
+}
+
+func (r *GanttRenderer) getSortedDates() []string {
 	dates := make([]string, 0, len(r.layout.DateToCol))
 	for d := range r.layout.DateToCol {
 		dates = append(dates, d)
 	}
 	sort.Strings(dates)
-
-	var lastMonth string
-	var monthStartCol int
-
-	for i, dStr := range dates {
-		col := r.layout.DateToCol[dStr]
-		t, _ := time.Parse(time.DateOnly, dStr)
-		monthLabel := t.Format("2006/01")
-
-		colName, _ := excelize.ColumnNumberToName(col)
-		r.f.SetColWidth(r.sheet, colName, colName, 3.5)
-
-		cell, _ := excelize.CoordinatesToCellName(col, 2)
-		r.f.SetCellValue(r.sheet, cell, t.Day())
-		r.f.SetCellStyle(r.sheet, cell, cell, r.dateStyle)
-
-		if lastMonth == "" {
-			monthStartCol = col
-			lastMonth = monthLabel
-		} else if monthLabel != lastMonth {
-			r.mergeMonth(monthStartCol, col-2, lastMonth)
-			monthStartCol = col
-			lastMonth = monthLabel
-		}
-		if i == len(dates)-1 {
-			r.mergeMonth(monthStartCol, col, lastMonth)
-		}
-	}
+	return dates
 }
 
 func (r *GanttRenderer) mergeMonth(start, end int, label string) {
