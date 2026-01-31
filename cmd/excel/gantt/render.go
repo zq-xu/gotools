@@ -80,7 +80,7 @@ func (r *GanttRenderer) drawBlackWalls() {
 	maxRow := len(r.layout.Tasks) + 2
 	for _, col := range r.layout.BlackCols {
 		name, _ := excelize.ColumnNumberToName(col)
-		r.f.SetCellStyle(r.sheet, fmt.Sprintf("%s3", name), fmt.Sprintf("%s%d", name, maxRow), r.blackStyle)
+		r.f.SetCellStyle(r.sheet, fmt.Sprintf("%s1", name), fmt.Sprintf("%s%d", name, maxRow), r.blackStyle)
 		r.f.SetColWidth(r.sheet, name, name, 0.6)
 	}
 }
@@ -98,7 +98,7 @@ func (r *GanttRenderer) drawTimeline() {
 	for i, dStr := range dates {
 		col := r.layout.DateToCol[dStr]
 		t, _ := time.Parse(time.DateOnly, dStr)
-		monthLabel := fmt.Sprintf("%d月", t.Month())
+		monthLabel := t.Format("2006/01")
 
 		colName, _ := excelize.ColumnNumberToName(col)
 		r.f.SetColWidth(r.sheet, colName, colName, 3.5)

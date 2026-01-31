@@ -31,7 +31,7 @@ func Gantt(filePath string) error {
 
 	// 3. 构建布局对象 (TimelineLayout 现在拥有 tasks)
 	timeline := NewTimelineLayout(tasks, 2)
-	timeline.Build(2026)
+	timeline.Build()
 
 	// 4. 执行渲染 (GanttRenderer 现在只依赖 timeline)
 	renderer := NewGanttRenderer(f, sheet2, timeline)
