@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/zq-xu/gotools/cmd/excel"
 	"github.com/zq-xu/gotools/cmd/format"
 	"github.com/zq-xu/gotools/logx"
 )
@@ -27,6 +28,7 @@ func NewCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(format.NewFormatCommand())
+	cmd.AddCommand(excel.NewExcelCommand())
 	cmd.PersistentFlags().StringVarP(&logLevel, "loglevel", "l", logx.DefaultLogrusLogLevel.String(), "the log level")
 	return cmd
 }
