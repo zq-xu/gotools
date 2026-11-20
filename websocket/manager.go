@@ -90,7 +90,7 @@ func (mgr *manager) Info() map[string]interface{} {
 
 // Start mgr
 func (mgr *manager) Start() {
-	logx.Logger.Errorf("websocket manage start")
+	logx.Logger.Infof("websocket manager start")
 
 	for {
 		select {

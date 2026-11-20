@@ -43,7 +43,7 @@ func ListAuditLog(ctx *gin.Context) {
 
 func listAuditLog(ctx context.Context, listParam *typesx.ListParams) (*typesx.PageResponse, errorx.ErrorInfo) {
 	listObj := make([]ModelAuditLog, 0)
-	count, err := storex.DB(ctx).ListWithCount(listParam, &ModelAuditLog{}, listObj)
+	count, err := storex.DB(ctx).ListWithCount(listParam, &ModelAuditLog{}, &listObj)
 	if err != nil {
 		return nil, errorx.NewError(http.StatusBadRequest, "load models failed", err)
 	}

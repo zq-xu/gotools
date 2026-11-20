@@ -29,14 +29,27 @@ func GetAccountInfoHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, GetUserInfoFromToken(ctx))
 }
 
+// GetUserInfoFromToken 从 JWT claims 取当前用户信息。
+// 只能用在已经过 JWT 中间件的路由上：未认证时 claims 为空，会返回全空的结构体
+// （而不是 panic），调用方用 ID 是否为空判断即可。
 func GetUserInfoFromToken(ctx *gin.Context) *AccountInfoResponse {
 	claims := jwt.ExtractClaims(ctx)
 
+	roles := claimString(claims, AuthUserRolesToken)
+
 	return &AccountInfoResponse{
-		ID:       claims[AuthAccountIDToken].(string),
-		Name:     claims[AuthAccountNameToken].(string),
-		Username: claims[AuthAccountUsernameToken].(string),
-		Roles:    strings.Split(claims[AuthUserRolesToken].(string), ","),
-		Status:   claims[AuthAccountStatusToken].(string),
+		ID:       claimString(claims, AuthAccountIDToken),
+		Name:     claimString(claims, AuthAccountNameToken),
+		Username: claimString(claims, AuthAccountUsernameToken),
+		Roles:    strings.Split(roles, ","),
+		Status:   claimString(claims, AuthAccountStatusToken),
 	}
+}
+
+func claimString(claims jwt.MapClaims, key string) string {
+	if v, ok := claims[key].(string); ok {
+		return v
+	}
+
+	return ""
 }

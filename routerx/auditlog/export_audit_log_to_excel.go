@@ -61,7 +61,7 @@ func ExportAuditLog(ctx *gin.Context) {
 
 func exportAuditLog(ctx context.Context, listParam *typesx.ListParams) ([]interface{}, errorx.ErrorInfo) {
 	listObj := make([]ModelAuditLog, 0)
-	err := storex.DB(ctx).List(listParam, listObj)
+	err := storex.DB(ctx).List(listParam, &listObj)
 	if err != nil {
 		return nil, errorx.NewError(http.StatusBadRequest, "load models failed", err)
 	}

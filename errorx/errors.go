@@ -16,8 +16,9 @@ type errorInfo struct {
 	err     error
 }
 
-func Errorf(err error, status int, format string, msg ...string) ErrorInfo {
-	return &errorInfo{status, fmt.Sprintf(format, msg), err}
+// Errorf 组装一条带状态码的错误消息，args 用于填充 format 里的占位符。
+func Errorf(err error, status int, format string, args ...any) ErrorInfo {
+	return &errorInfo{status, fmt.Sprintf(format, args...), err}
 }
 
 func NewError(status int, message string, err error) ErrorInfo {
