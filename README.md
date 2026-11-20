@@ -12,7 +12,7 @@
 
 库里的每个包都遵循同样四条约定，读懂这四条，剩下的看代码就行：
 
-1. **一域一包，统一带 `x` 后缀**。`logx`、`configx`、`errorx`、`typesx`、`utilsx`、`storex`、`routerx`、`fastapix` —— 加后缀是为了不和标准库或第三方包撞名（`log`、`config` 这些名字在 import 里太容易冲突）。
+1. **一域一包，统一带 `x` 后缀**。`logx`、`configx`、`errorx`、`typesx`、`utilsx`、`storex`、`routerx`、`apix` —— 加后缀是为了不和标准库或第三方包撞名（`log`、`config` 这些名字在 import 里太容易冲突）。
 2. **装配靠注册，不靠手工调用**。各包在自己的 `init()` 里向 `configx` 注册"配置段 + 初始化函数"，应用只需要一句 `configx.Setup("config.yaml")`，日志、数据库、路由、加密就都按配置文件就绪了。
 3. **错误只有一个形状**。所有对外错误都是 `errorx.ErrorInfo`（HTTP 状态码 + 消息 + 原始 error），handler 里只需 `ctx.JSON(ei.StatusCode(), ei.ErrorMessage())`。
 4. **依赖只向下，不向上**。基础层不知道存储层的存在，存储层不知道 HTTP 层的存在；`cmd/` 可以依赖库，库永远不依赖 `cmd/`。
@@ -26,7 +26,7 @@ flowchart TB
     subgraph WEB["Web 层"]
         direction LR
         routerx["routerx<br/>引擎装配 · 路由组 · JWT · 审计日志"]
-        fastapix["fastapix<br/>泛型 CRUD Handler"]
+        apix["apix<br/>泛型 CRUD Handler"]
         websocket["websocket<br/>连接 · 分组 · 广播"]
     end
 
@@ -86,7 +86,7 @@ gotools/
 ├── routerx/                  # gin 引擎装配
 │   ├── auth/                 #   JWT 认证中间件
 │   └── auditlog/             #   审计日志（中间件 + 查询 + 导出 Excel）
-├── fastapix/                 # 泛型 CRUD handler（getx/、list、update、delete）
+├── apix/                     # 泛型 CRUD handler（getx/、list、update、delete）
 ├── websocket/                # Hub 模式的连接管理
 │
 ├── cryptox/                  # AES-128/192/256 CBC + PKCS#7
@@ -115,8 +115,8 @@ gotools/
 | `routerx` | HTTP 引擎 | `NewRouter`、`StartRouter`、`NewGroup`、`RegisterGroup`、`SetHealthHandler` |
 | `routerx/auth` | 认证 | `InitAuthMiddleware(loader)`、`GetUserInfoFromToken` |
 | `routerx/auditlog` | 审计 | `Middleware`、`ListAuditLog`、`ExportAuditLog` |
-| `fastapix` | 泛型 CRUD | `ListHandler`、`UpdateHandler`、`DeleteHandler`、`ListByRawGormHandler` |
-| `fastapix/getx` | 泛型 Get | `GetHandler`、`NewDefaultConfig[T, R]`、`ValidateAuthInRoles` |
+| `apix` | 泛型 CRUD | `ListHandler`、`UpdateHandler`、`DeleteHandler`、`ListByRawGormHandler` |
+| `apix/getx` | 泛型 Get | `GetHandler`、`NewDefaultConfig[T, R]`、`ValidateAuthInRoles` |
 | `websocket` | WebSocket | `GlobalManager`、`NewConnFromGin`、`NewClient` |
 | `cryptox` | 加解密 | `Init(cfg)`、`SetCrypto`、`Encrypt` / `Decrypt`、`NewAesPasswordCrypto(key)` |
 | `processor` | 并发处理 | `NewProcessor(pickerGen)`、`Queue`、`Worker`、`Picker` |
@@ -189,8 +189,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zq-xu/gotools/configx"
-	"github.com/zq-xu/gotools/fastapix"
-	"github.com/zq-xu/gotools/fastapix/getx"
+	"github.com/zq-xu/gotools/apix"
+	"github.com/zq-xu/gotools/apix/getx"
 	"github.com/zq-xu/gotools/routerx"
 	"github.com/zq-xu/gotools/storex/account" // 导入即注册 accounts 表，启动时 AutoMigrate
 )
@@ -222,10 +222,10 @@ func main() {
 }
 
 func listAccounts(ctx *gin.Context) {
-	fastapix.ListHandler[account.Account](
+	apix.ListHandler[account.Account](
 		ctx,
-		fastapix.DefaultListObjWithCount[account.Account],
-		fastapix.DefaultTransListObjToResp[account.Account, account.Account],
+		apix.DefaultListObjWithCount[account.Account],
+		apix.DefaultTransListObjToResp[account.Account, account.Account],
 	)
 }
 
@@ -240,7 +240,7 @@ func getAccount(ctx *gin.Context) {
 
 ```go
 func updateAccount(ctx *gin.Context) {
-	fastapix.UpdateHandler[account.Account, UpdateAccountParams](
+	apix.UpdateHandler[account.Account, UpdateAccountParams](
 		ctx,
 		func(db database.Database, obj *account.Account, p *UpdateAccountParams) errorx.ErrorInfo {
 			obj.Name = p.Name
@@ -250,7 +250,7 @@ func updateAccount(ctx *gin.Context) {
 }
 
 func deleteAccount(ctx *gin.Context) {
-	fastapix.DeleteHandler[account.Account](
+	apix.DeleteHandler[account.Account](
 		ctx,
 		func(db database.Database, obj *account.Account) errorx.ErrorInfo {
 			return nil // 返回非 nil 即中断删除
@@ -313,7 +313,7 @@ func init() {
 { "pageNum": 2, "pageSize": 10, "pageCount": 3, "count": 25, "items": [ ... ] }
 ```
 
-**排序键只接受普通标识符**（`^[A-Za-z_][A-Za-z0-9_]*$`），`sortBy` 里夹带 SQL 片段会被直接丢弃；过滤后一个都不剩时回退到默认的 `updated_at,desc`，因此 `ORDER BY` 永远不会是空串。这一层只防注入，不保证字段真实存在于模型上——需要确认字段归属时再调 `listParam.Validate(new(Account))`（`id` / `created_at` / `updated_at` 总是合法）。`fastapix` 的现成 handler 只做前者，后者要自己调。
+**排序键只接受普通标识符**（`^[A-Za-z_][A-Za-z0-9_]*$`），`sortBy` 里夹带 SQL 片段会被直接丢弃；过滤后一个都不剩时回退到默认的 `updated_at,desc`，因此 `ORDER BY` 永远不会是空串。这一层只防注入，不保证字段真实存在于模型上——需要确认字段归属时再调 `listParam.Validate(new(Account))`（`id` / `created_at` / `updated_at` 总是合法）。`apix` 的现成 handler 只做前者，后者要自己调。
 
 ### Model 约定
 
@@ -357,7 +357,7 @@ sequenceDiagram
     participant C as 客户端
     participant R as gin 引擎
     participant M as 中间件链
-    participant H as fastapix ListHandler
+    participant H as apix ListHandler
     participant S as storex 数据访问层
     participant G as GORM / MySQL
 
@@ -407,19 +407,22 @@ go test ./...         # 少量单测：cryptox、processor、分页排序、错�
 - `cmd/format`、`cmd/excel` 的实现收进 `internal/cli/`，外部无法 import，可以自由重构；
 - `bricks/cryptox`、`bricks/processor` 拉平为顶层的 `cryptox`、`processor`（`bricks` 这一层没有实际分层意义）。
 
-**对外包的 import 路径（`logx`、`configx`、`storex`、`routerx`、`fastapix` 等）一个都没有变**，消费者无需改动；唯一需要跟着改的是 `bricks/*` 的使用方——把 import 里的 `bricks/` 去掉即可。
+**除 `bricks/*` 之外，对外包的 import 路径（`logx`、`configx`、`storex`、`routerx` 等）一个都没有变**，消费者无需改动；需要跟着改的是 `bricks/*` 的使用方——把 import 里的 `bricks/` 去掉即可。
+
+另有一次独立改名：**`fastapix` → `apix`**。原名字容易让人联想到 Python 的 FastAPI，而它其实就是 gin 上一层泛型 REST 辅助 handler。改为 `apix` 后与 `logx` / `configx` / `routerx` / `storex` 的 `x` 后缀惯例一致。因为当时还没有外部消费者，这一改影响面仅限仓库内部与本文档；`apix/getx` 子包的名称保持不变。
 
 ### 行为变更（同批修复）
 
 - **记录不存在改为 404**：`NewErrorInfoForGetError` 之前把 `gorm.ErrRecordNotFound` 映射成 `400 not found`，现在是 404。前端如果按 400 做过特判，需要同步。
 - **`sortBy` 默认过滤非法键**：非标识符的排序键被丢弃，全部非法时回退 `updated_at,desc`；原始字符串不再进入 `ORDER BY`。
 - **`cryptox` 不再自己读配置**：去掉了对 `configx` 的依赖，改由 `cryptox.Init(cfg)` / `SetCrypto` 装配。`storex/account` 在 `init()` 里注册了 `crypto` 配置段，所以引用 account 的应用行为不变；只单独用 `cryptox` 的需要自己加一行注册（见 `_examples/cryptokit`）。`aesKey` 为空时跳过初始化、不会让启动失败，真正加密时会返回 `not initialized` 错误。
-- **`fastapix.DeleteHandler` 的 `validateFn` 允许为 nil**：之前传 nil 会在删除时 panic。
+- **`apix.DeleteHandler` 的 `validateFn` 允许为 nil**：之前传 nil 会在删除时 panic。
 
 ## 现状与后续
 
-一些已经明确、但还没动手的整理项：
+结构层面目前没有待办的整理项，`fastapix → apix` 的改名也已经落地。剩下两件属于"要不要做"而不是"要不要修"的事：
 
-- **`fastapix` 这个名字**：它是基于 gin 的 REST 辅助包，和 Python 的 FastAPI 没有关系，长期看会误导人。改名窗口就在还没有外部消费者的时候。
+- 打了 tag 之后才能 `go install`/`go get` 到固定版本。当前最新 tag 早于上面这批重构与修复，如果别的机器要拉，先打一个新 tag（`v0.0.16` 起）。
+- `configx` 在找不到配置段时会往 stdout 打一行提示，长期看更适合走 `logx` 的 debug 级别；不影响行为，可以等下次动 `configx` 时一并处理。
 
 后续如果要做长期运行的应用（例如基于 Kafka 消费任务的服务），建议**独立仓库**而不是塞进本库：库的 tag 发布节奏不该被应用的部署需求绑架，`go.mod` 也不该被拉进消息队列客户端这类重依赖。本地同时改库和应用时用 `go.work` 把两者串起来即可，不需要 `replace`。

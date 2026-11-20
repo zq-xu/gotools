@@ -1,4 +1,4 @@
-package fastapix
+package apix
 
 import (
 	"fmt"
