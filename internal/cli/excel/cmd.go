@@ -3,7 +3,7 @@ package excel
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/zq-xu/gotools/cmd/excel/gantt"
+	"github.com/zq-xu/gotools/internal/cli/excel/gantt"
 )
 
 func NewExcelCommand() *cobra.Command {

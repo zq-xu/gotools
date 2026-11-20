@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/zq-xu/gotools/bricks/cryptox"
+	"github.com/zq-xu/gotools/cryptox"
 	"github.com/zq-xu/gotools/configx"
 	"github.com/zq-xu/gotools/logx"
 )

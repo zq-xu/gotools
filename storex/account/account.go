@@ -7,7 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zq-xu/gotools/bricks/cryptox"
+	"github.com/zq-xu/gotools/cryptox"
 	"github.com/zq-xu/gotools/errorx"
 	"github.com/zq-xu/gotools/routerx/auth"
 	"github.com/zq-xu/gotools/storex"

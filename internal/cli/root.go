@@ -1,10 +1,10 @@
-package cmd
+package cli
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/zq-xu/gotools/cmd/excel"
-	"github.com/zq-xu/gotools/cmd/format"
+	"github.com/zq-xu/gotools/internal/cli/excel"
+	"github.com/zq-xu/gotools/internal/cli/format"
 	"github.com/zq-xu/gotools/logx"
 )
 
