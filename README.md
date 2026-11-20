@@ -101,14 +101,20 @@ gotools/
 ├── cryptox/                  # AES-128/192/256 CBC + PKCS#7
 ├── processor/                # 队列 + 固定 Worker 池
 │
-├── docs/                     # 使用文档与分场景示例
-├── _examples/                # 最小可运行示例（config、cryptokit）
+├── docs/                     # 使用文档，按场景组织
+├── _examples/                # 可直接 go run 的示例，不参与 ./... 构建
+│   ├── quickstart/           #   → docs/01
+│   ├── rest-api-service/     #   → docs/02
+│   ├── worker-service/       #   → docs/03
+│   ├── cli-service/          #   → docs/04
+│   ├── config/               #   配置段清单示例
+│   └── cryptokit/            #   加解密最小示例
 ├── _demos/                   # 预留
 ├── Makefile
 └── go.mod
 ```
 
-`cmd/` 只放入口，命令实现在 `internal/`（外部看不到，可以随便改），其余目录都是对外库代码。以 `_` 开头的目录会被 Go 工具链忽略，用来放不参与 `./...` 构建的示例与预留位。
+`cmd/` 只放入口，命令实现在 `internal/`（外部看不到，可以随便改），其余目录都是对外库代码。以 `_` 开头的目录会被 Go 工具链忽略，用来放不参与 `./...` 构建的示例与预留位；`docs/` 只放 Markdown，代码一律留在 `_examples/` 里，便于直接打开和运行。
 
 ## 包索引
 
@@ -156,6 +162,19 @@ go get github.com/zq-xu/gotools@latest
 2. `configx.Setup("config.yaml")` 完成装配；
 3. `routerx.RegisterGroup(...)` 挂路由，`routerx.StartRouter(ctx, routerx.NewRouter())` 阻塞运行。
 
+## 示例
+
+四个可直接运行的小服务，每个都对应一篇文档；代码在 `_examples/` 下，文档只讲结构与关键片段。
+
+| 示例 | 场景 | 运行 |
+| --- | --- | --- |
+| [`_examples/quickstart`](_examples/quickstart) | 最小 HTTP 服务 + 分页列表 | `go run .` |
+| [`_examples/rest-api-service`](_examples/rest-api-service) | JWT 登录、账号 CRUD、审计导出 | `go run . -seed` 后 `go run .` |
+| [`_examples/worker-service`](_examples/worker-service) | 队列 + 5 个固定 Worker | `go run .` |
+| [`_examples/cli-service`](_examples/cli-service) | cobra 子命令、全局 flag | `go run . greet Alan -n 3` |
+
+前两个需要 MySQL（库名 `gotools_demo`），后两个不依赖外部服务。示例被 `_` 前缀排除在 `./...` 之外，单独检查用 `make examples`。
+
 ## 文档
 
 | 文档 | 内容 |
@@ -192,10 +211,12 @@ gotools excel gantt plan.xlsx     # 读 Sheet1 的任务表，在 Sheet2 生成�
 ```bash
 make build            # go build -o bin/gotools ./cmd/gotools
 make format           # bin/gotools format（需先 build）
+make test             # go test ./...
+make examples         # 逐个 go vet _examples 下的包（示例不在 ./... 里，且 ./_examples/... 匹配不到）
 go vet ./...
-go test ./...
-go build ./_examples/config ./_examples/cryptokit   # _examples 不在 ./... 里
 ```
+
+文档里的代码与 `_examples/` 保持同步：改示例即改文档，文档只引用路径与关键片段。
 
 依赖版本以 `go.mod` 为准。
 

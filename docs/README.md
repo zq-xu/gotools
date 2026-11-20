@@ -1,6 +1,6 @@
 # gotools 文档
 
-按「要做什么」组织，不按包组织。每个示例都是完整文件，可以整块复制进新项目。
+按「要做什么」组织，不按包组织。01–04 的完整代码都在仓库 [`_examples/`](../_examples/) 下，文档只保留骨架与关键片段，代码以示例目录为准（每个示例都可 `go run .` 直接跑）。
 
 ## 阅读路径
 
@@ -26,6 +26,22 @@
 | [08-auth-and-audit.md](08-auth-and-audit.md) | 参考 | JWT 认证、角色校验、审计日志与导出 |
 | [09-crypto.md](09-crypto.md) | 参考 | AES 加解密、密钥来源与轮换 |
 | [10-websocket.md](10-websocket.md) | 参考 | Hub 模式连接管理与广播 |
+
+## 示例代码
+
+| 文档 | 目录 | 启动方式 |
+| --- | --- | --- |
+| [01 快速开始](01-quickstart.md) | [`_examples/quickstart`](../_examples/quickstart) | `go run .` |
+| [02 REST 服务](02-rest-api-service.md) | [`_examples/rest-api-service`](../_examples/rest-api-service) | `go run . -seed` 后 `go run .` |
+| [03 Worker 服务](03-worker-service.md) | [`_examples/worker-service`](../_examples/worker-service) | `go run .` |
+| [04 CLI 服务](04-cli-service.md) | [`_examples/cli-service`](../_examples/cli-service) | `go run . greet` |
+
+`_examples` 前缀的 `_` 会让 Go 工具链忽略该目录，所以 `go build ./...` 不会编译它们；连 `./_examples/...` 也匹配不到包，必须给具体目录。要检查/运行示例：
+
+```bash
+make examples                          # 逐个 go vet 每个示例目录
+cd _examples/quickstart && go run .    # 运行某个示例
+```
 
 ## 三个示例服务的关系
 

@@ -1,6 +1,6 @@
 # 01 快速开始
 
-目标：一份配置 + 一个 `main.go`，跑起能查询列表的 HTTP 服务。全程不需要写装配代码。
+目标：跑通一个能查询列表的 HTTP 服务。全部代码在 [`_examples/quickstart/`](../_examples/quickstart/)，两个文件、60 行左右。
 
 ## 前置
 
@@ -11,99 +11,51 @@
 CREATE DATABASE gotools_demo DEFAULT CHARACTER SET utf8mb4;
 ```
 
-## 1. 新建模块
+## 方式一：直接跑仓库里的示例
+
+```bash
+cd _examples/quickstart
+go run .
+```
+
+`config.yaml` 里的连接信息（`127.0.0.1:3306`、`root/root`、库名 `gotools_demo`）按自己环境改一下。
+
+## 方式二：复制成自己的项目
 
 ```bash
 mkdir demo && cd demo
 go mod init demo
 go get github.com/zq-xu/gotools@latest
-```
-
-## 2. 写配置
-
-`config.yaml`：
-
-```yaml
-logs:
-  logLevel: info            # trace / debug / info / warn / error / fatal / panic
-
-database:
-  address: 127.0.0.1
-  port: 3306
-  username: root
-  password: root
-  database: gotools_demo
-  logLevel: 4               # GORM logger：1 Silent / 2 Error / 3 Warn / 4 Info
-
-router:
-  host: 0.0.0.0
-  port: 8080
-  disableTLS: true          # 生产环境去掉这行并填 certPath / keyPath
-  certPath: server.pem
-  keyPath: server.key
-
-crypto:
-  aesKey: "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4"   # base64 的 24 字节密钥，见 09 章
-```
-
-> `crypto` 段只在 import 了 `storex/account` 时才需要；`logs` 段由 `configx` 自己注册，因此总是有效。
-
-## 3. 写代码
-
-`main.go`：
-
-```go
-package main
-
-import (
-	"context"
-
-	"github.com/gin-gonic/gin"
-
-	"github.com/zq-xu/gotools/apix"
-	"github.com/zq-xu/gotools/configx"
-	"github.com/zq-xu/gotools/routerx"
-	"github.com/zq-xu/gotools/storex/account" // 导入即注册 accounts 表与 crypto 配置段
-	"github.com/zq-xu/gotools/utilsx"
-)
-
-func main() {
-	if err := configx.Setup("config.yaml"); err != nil {
-		panic(err)
-	}
-
-	// 配置里没写 host/port 时补 0.0.0.0:8080
-	routerx.RouterConfig.OptDefalt()
-
-	routerx.RegisterGroup(
-		routerx.NewGroup("/api/v1").AddAPI(
-			&routerx.API{Method: "GET", Path: "/accounts", Handler: listAccounts},
-		),
-	)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	utilsx.Notify(cancel) // 把 SIGINT / SIGTERM 接到 ctx 上
-
-	if err := routerx.StartRouter(ctx, routerx.NewRouter()); err != nil {
-		panic(err)
-	}
-}
-
-func listAccounts(ctx *gin.Context) {
-	apix.ListHandler[account.Account](
-		ctx,
-		apix.DefaultListObjWithCount[account.Account],
-		apix.DefaultTransListObjToResp[account.Account, account.Account],
-	)
-}
-```
-
-## 4. 运行
-
-```bash
+cp <仓库>/_examples/quickstart/{main.go,config.yaml} .
 go run .
 ```
+
+## 文件说明
+
+| 文件 | 作用 |
+| --- | --- |
+| [`main.go`](../_examples/quickstart/main.go) | 装配、路由注册、启动；一个列表 handler |
+| [`config.yaml`](../_examples/quickstart/config.yaml) | `logs` / `database` / `router` / `crypto` 四个配置段 |
+
+`main.go` 的骨架只有三段：
+
+```go
+configx.Setup("config.yaml")        // 按注册表初始化日志、数据库、路由配置、加密
+routerx.RouterConfig.OptDefalt()    // 补 host/port 默认值（不会自动调用）
+routerx.StartRouter(ctx, routerx.NewRouter())   // 阻塞运行，ctx 取消后优雅退出
+```
+
+列表 handler 是泛型函数，两行拿到「分页解析 → 过滤 → 排序 → 查询计数 → 转响应」的完整链路：
+
+```go
+apix.ListHandler[account.Account](
+	ctx,
+	apix.DefaultListObjWithCount[account.Account],
+	apix.DefaultTransListObjToResp[account.Account, account.Account],
+)
+```
+
+## 验证
 
 启动日志按注册顺序打印，四行都出现即装配完成：
 
@@ -115,8 +67,6 @@ Succeed to init crypto
 Starting server at 0.0.0.0:8080
 ```
 
-## 5. 验证
-
 ```bash
 curl -s localhost:8080/health
 # {}
@@ -125,7 +75,7 @@ curl -s 'localhost:8080/api/v1/accounts?pageNum=1&pageSize=10&sortBy=created_at,
 # {"pageNum":1,"pageSize":10,"pageCount":0,"count":0,"items":[]}
 ```
 
-`accounts` 表在启动时由 `AutoMigrate` 建好，此时是空表，所以 `items` 为空、`count` 为 0。
+`accounts` 表在启动时由 `AutoMigrate` 建好，此时是空表。
 
 ## 这一步发生了什么
 
@@ -147,16 +97,16 @@ sequenceDiagram
     R-->>M: 阻塞直到 ctx 取消
 ```
 
-关键是**没有显式初始化调用**：`import` 触发了各包的 `init()`，注册表在 `Setup` 时被依次执行。这也是使用本库最容易踩坑的地方——见下一节。
+关键是**没有显式初始化调用**：`import` 触发各包 `init()`，注册表在 `Setup` 时依次执行。这也是最容易踩坑的地方——见下一节。
 
 ## 常见问题
 
 | 现象 | 原因 |
 | --- | --- |
-| `failed to setup database` | 配置里缺 `database` 段。import 了 `storex` 就必须提供该段 |
-| 启动后表不存在 | 模型没有 `storex.RegisterTable(&X{})`，或定义它的包没有被 import |
-| `empty config found for ...` 打印在 stdout | 正常提示，该段为空；需要就去掉对应 import |
-| 端口被占用 | `router.port` 改成其它端口，或先停掉占用进程 |
+| `failed to setup database` | 配置里缺 `database` 段。import 了 `storex` 就必须提供 |
+| 启动后表不存在 | 模型没有 `storex.RegisterTable(&X{})`，或定义它的包没被 import |
+| `empty config found for ...` 打印在 stdout | 正常提示，该段为空；不需要就去掉对应 import |
+| 端口被占用 | 改 `router.port`，或先停掉占用进程 |
 | `cannot find GOROOT directory` | shell 里残留了指向已删除目录的 `GOROOT`，用 `env -u GOROOT go run .` |
 
-下一步：把列表接口扩成完整 CRUD 与登录，见 [02 REST 服务](02-rest-api-service.md)。
+下一步：[02 REST 服务](02-rest-api-service.md)。
