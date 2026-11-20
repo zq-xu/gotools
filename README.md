@@ -1,39 +1,49 @@
 # gotools
 
-一个个人自用的 Go 工具库（module `github.com/zq-xu/gotools`）。
+基于 gin + GORM 的 Go 服务端基础库：把一个 HTTP 服务里那些「每个项目都要重写一遍、又每次写得不一样」的部分固化成可复用的包，并附一套自用 CLI。
 
-它把"每个新项目都要写一遍、但每个项目都写得不太一样"的那部分固化下来：日志、配置装配、错误模型、分页类型、GORM 数据访问、gin 服务脚手架、泛型 CRUD、WebSocket 连接管理，顺带附上一套自己的小命令。
+```
+module  github.com/zq-xu/gotools
+stack   gin · GORM · MySQL · viper · logrus · cobra
+```
 
-> 状态：`v0.x`，个人项目，API 会随实际使用调整。技术栈假设是 **gin + GORM + MySQL + viper + logrus + cobra**；换 ORM 需要自己实现 `storex/database.Database` 接口。
+> 状态 `v0.x`：个人维护，未承诺稳定 API。库本身不带业务语义，只负责装配与约定；具体怎么写业务，见 [`docs/`](docs/README.md)。
 
----
+## 能力
 
-## 设计原则
+| 关注点 | 包 | 提供什么 |
+| --- | --- | --- |
+| 装配与基础设施 | `configx` `logx` `errorx` | 一句话装配配置段；统一日志；单一错误形状 |
+| 数据访问 | `storex` `typesx` | `Database` 接口 + GORM 实现、事务、Model 约定、分页排序过滤 |
+| HTTP 层 | `routerx` `apix` `websocket` | 引擎装配、路由组 DSL、JWT、审计、泛型 CRUD、连接管理 |
+| 通用件 | `cryptox` `processor` `utilsx` | AES 加解密、队列 + Worker 池、杂项工具 |
 
-库里的每个包都遵循同样四条约定，读懂这四条，剩下的看代码就行：
+## 设计约定
 
-1. **一域一包，统一带 `x` 后缀**。`logx`、`configx`、`errorx`、`typesx`、`utilsx`、`storex`、`routerx`、`apix` —— 加后缀是为了不和标准库或第三方包撞名（`log`、`config` 这些名字在 import 里太容易冲突）。
-2. **装配靠注册，不靠手工调用**。各包在自己的 `init()` 里向 `configx` 注册"配置段 + 初始化函数"，应用只需要一句 `configx.Setup("config.yaml")`，日志、数据库、路由、加密就都按配置文件就绪了。
-3. **错误只有一个形状**。所有对外错误都是 `errorx.ErrorInfo`（HTTP 状态码 + 消息 + 原始 error），handler 里只需 `ctx.JSON(ei.StatusCode(), ei.ErrorMessage())`。
-4. **依赖只向下，不向上**。基础层不知道存储层的存在，存储层不知道 HTTP 层的存在；`cmd/` 可以依赖库，库永远不依赖 `cmd/`。
+四条约定贯穿全部包，读懂它们剩下的看代码即可：
+
+1. **一域一包，统一 `x` 后缀。** `logx`、`configx`、`errorx`、`typesx`、`utilsx`、`storex`、`routerx`、`apix` —— 避免与标准库或第三方包的 `log`、`config`、`router` 在 import 处撞名。
+2. **装配靠注册，不靠手工调用。** 各包在自己的 `init()` 里向 `configx` 注册「配置段 + 初始化函数」；应用只需 `configx.Setup("config.yaml")`，日志、数据库、路由、加密按注册表依次就绪。代价是依赖隐式：**import 了什么，配置里就必须有什么段**。
+3. **错误只有一个形状。** 对外错误一律 `errorx.ErrorInfo`（HTTP 状态码 + 消息 + 原始 error），handler 里只有一句 `ctx.JSON(ei.StatusCode(), ei.ErrorMessage())`。
+4. **依赖只向下。** 基础层不知道存储层，存储层不知道 HTTP 层；`cmd/`、`_examples/`、`docs/` 可以依赖库，库永不反向依赖它们。
 
 ## 分层架构
 
 ```mermaid
 flowchart TB
-    APP["应用层<br/>HTTP 服务 · CLI 命令 · 后台任务"]
+    APP["应用层<br/>HTTP 服务 · CLI · 后台任务"]
 
     subgraph WEB["Web 层"]
         direction LR
-        routerx["routerx<br/>引擎装配 · 路由组 · JWT · 审计日志"]
-        apix["apix<br/>泛型 CRUD Handler"]
+        routerx["routerx<br/>引擎装配 · 路由组 · JWT · 审计"]
+        apix["apix<br/>泛型 CRUD handler"]
         websocket["websocket<br/>连接 · 分组 · 广播"]
     end
 
     subgraph STORE["数据层"]
         direction LR
-        storex["storex<br/>Database 接口 · 事务 · Model 约定"]
-        gormkit["gormkit<br/>GORM / MySQL 实现 · 自动迁移"]
+        storex["storex<br/>Database 接口 · 事务 · Model"]
+        gormkit["gormkit<br/>GORM / MySQL · 自动迁移"]
     end
 
     subgraph BASE["基础层"]
@@ -41,14 +51,14 @@ flowchart TB
         configx["configx<br/>配置注册与装配"]
         logx["logx<br/>logrus 封装"]
         errorx["errorx<br/>错误模型"]
-        typesx["typesx<br/>分页 · 排序 · 模型转换"]
-        utilsx["utilsx<br/>泛用小工具"]
+        typesx["typesx<br/>分页 · 排序 · 转换"]
+        utilsx["utilsx<br/>通用工具"]
     end
 
-    subgraph BRICKS["可复用积木"]
+    subgraph PIECES["通用件"]
         direction LR
         cryptox["cryptox<br/>AES 加解密"]
-        processor["processor<br/>队列 + Worker 池"]
+        processor["processor<br/>队列 + Worker"]
     end
 
     APP --> WEB
@@ -57,320 +67,110 @@ flowchart TB
     WEB --> STORE
     WEB --> BASE
     STORE --> BASE
-    BRICKS --> BASE
+    PIECES --> BASE
 ```
 
-箭头即依赖方向。越往下越稳定，越往下改动越需要谨慎——`utilsx` 里一个函数改名，上面四层都会响。
+箭头即依赖方向。越靠下越稳定，改动成本也越高：`utilsx` 里改一个函数签名，上面四层都会跟着响。
 
 ## 目录结构
 
 ```
 gotools/
-├── cmd/
-│   └── gotools/main.go       # package main：唯一可执行入口，只有 5 行
-├── internal/cli/             # 命令实现，不对外暴露
+├── cmd/gotools/main.go       # 唯一可执行入口（5 行）
+├── internal/cli/             # 命令实现，外部不可 import
 │   ├── root.go               #   根命令 + 全局 --loglevel
-│   ├── format/               #   gotools format（重排 Go import 分组）
-│   └── excel/gantt/          #   gotools excel gantt（Excel 甘特图）
+│   ├── format/               #   gotools format
+│   └── excel/gantt/          #   gotools excel gantt
 │
-├── logx/                     # logrus + 自定义 formatter + 全局 Logger
-├── configx/                  # viper 注册式配置装配
-├── errorx/                   # 带 HTTP 状态码的错误模型
-├── typesx/                   # 分页/排序参数、PageResponse、ModelResponse
-├── utilsx/                   # 拷贝、指针、时间、文件、Excel 导出、UUID……
+├── logx/                     # logrus + 自定义 formatter
+├── configx/                  # viper 注册式装配
+├── errorx/                   # 带状态码的错误模型
+├── typesx/                   # 分页 / 排序 / 响应类型
+├── utilsx/                   # 拷贝、指针、时间、文件、Excel、UUID
 │
-├── storex/                   # 数据访问抽象
+├── storex/                   # 数据访问
 │   ├── database/             #   Database 接口（唯一需要 mock 的边界）
-│   ├── gormkit/              #   GORM 实现、事务、Model、自动迁移、错误映射
+│   ├── gormkit/              #   GORM 实现、事务、Model、迁移、错误映射
 │   └── account/              #   内置账号模型 + 登录校验
 ├── routerx/                  # gin 引擎装配
 │   ├── auth/                 #   JWT 认证中间件
-│   └── auditlog/             #   审计日志（中间件 + 查询 + 导出 Excel）
+│   └── auditlog/             #   审计日志（中间件 + 查询 + Excel 导出）
 ├── apix/                     # 泛型 CRUD handler（getx/、list、update、delete）
-├── websocket/                # Hub 模式的连接管理
+├── websocket/                # Hub 模式连接管理
 │
 ├── cryptox/                  # AES-128/192/256 CBC + PKCS#7
 ├── processor/                # 队列 + 固定 Worker 池
 │
-├── _examples/                # 最小示例（config、cryptokit）
+├── docs/                     # 使用文档与分场景示例
+├── _examples/                # 最小可运行示例（config、cryptokit）
 ├── _demos/                   # 预留
 ├── Makefile
 └── go.mod
 ```
 
-`cmd/` 只放可执行入口，命令的实现在 `internal/` 里（外部无法 import，因此可以随便改），其余目录都是对外可见的库代码。
+`cmd/` 只放入口，命令实现在 `internal/`（外部看不到，可以随便改），其余目录都是对外库代码。以 `_` 开头的目录会被 Go 工具链忽略，用来放不参与 `./...` 构建的示例与预留位。
 
-## 包一览
+## 包索引
 
 | 包 | 定位 | 主要入口 |
 | --- | --- | --- |
-| `logx` | 日志 | `logx.Logger`、`SetLoggerLevel`、`MyFormatter` |
+| `logx` | 日志 | `Logger`、`SetLoggerLevel`、`MyFormatter` |
 | `configx` | 配置装配 | `Register` / `RegisterByFile`、`Setup` |
-| `errorx` | 错误模型 | `NewError(status, msg, err)`、`Errorf(...)`、`ErrorInfo` |
-| `typesx` | 通用类型 | `ListParams`、`PageResponse`、`GetListParams`、`NewSorter` |
-| `utilsx` | 杂项工具 | `Copy`、`UnixTime`、`GenerateUUID`、`NewExcelExport`、`Notify` |
-| `storex` | 数据访问门面 | `DB(ctx)`、`GormDB(ctx)`、`Model`、`RegisterTable`、`DoDBTransaction` |
-| `storex/gormkit` | GORM 实现 | `InitGorm`、自动迁移、错误映射 `NewErrorInfoFor*Error` |
-| `storex/account` | 内置账号 | `Account`、`LoadLoginAccount`（配合 JWT 使用） |
-| `routerx` | HTTP 引擎 | `NewRouter`、`StartRouter`、`NewGroup`、`RegisterGroup`、`SetHealthHandler` |
-| `routerx/auth` | 认证 | `InitAuthMiddleware(loader)`、`GetUserInfoFromToken` |
-| `routerx/auditlog` | 审计 | `Middleware`、`ListAuditLog`、`ExportAuditLog` |
-| `apix` | 泛型 CRUD | `ListHandler`、`UpdateHandler`、`DeleteHandler`、`ListByRawGormHandler` |
+| `errorx` | 错误模型 | `NewError`、`Errorf`、`ErrorInfo` |
+| `typesx` | 通用类型 | `ListParams`、`GetListParams`、`PageResponse`、`NewSorter`、`ModelResponse` |
+| `utilsx` | 杂项工具 | `Copy`、`UnixTime`、`GenerateUUID`、`NewExcelExport`、`Notify`、`Opt*Ptr` |
+| `storex` | 数据访问门面 | `DB(ctx)`、`GormDB(ctx)`、`Model`、`RegisterTable`、`GenerateModel`、`NewErrorInfoFor*Error` |
+| `storex/database` | 存储接口 | `Database` |
+| `storex/gormkit` | GORM 实现 | `InitGorm`、`DoGormDBTransaction`、`GenerateDBForQuery`、`OptPageDB` |
+| `storex/account` | 内置账号 | `Account`、`LoadLoginAccount` |
+| `routerx` | HTTP 引擎 | `NewRouter`、`StartRouter`、`NewGroup`、`RegisterGroup`、`SetHealthHandler`、`Login` / `Logout` |
+| `routerx/auth` | 认证 | `InitAuthMiddleware`、`Middleware`、`GetUserInfoFromToken` |
+| `routerx/auditlog` | 审计 | `Middleware`、`ListAuditLog`、`ExportAuditLog`、`ModelAuditLog` |
+| `apix` | 泛型 CRUD | `ListHandler`、`ListByRawGormHandler`、`UpdateHandler`、`DeleteHandler`、`WithFilter` |
 | `apix/getx` | 泛型 Get | `GetHandler`、`NewDefaultConfig[T, R]`、`ValidateAuthInRoles` |
 | `websocket` | WebSocket | `GlobalManager`、`NewConnFromGin`、`NewClient` |
-| `cryptox` | 加解密 | `Init(cfg)`、`SetCrypto`、`Encrypt` / `Decrypt`、`NewAesPasswordCrypto(key)` |
-| `processor` | 并发处理 | `NewProcessor(pickerGen)`、`Queue`、`Worker`、`Picker` |
+| `cryptox` | 加解密 | `Init`、`SetCrypto`、`Encrypt` / `Decrypt`、`NewAesPasswordCrypto` |
+| `processor` | 并发处理 | `NewProcessor`、`Queue`、`Worker`、`Picker` |
 
-## 快速开始
-
-### 安装 CLI
+## 安装
 
 ```bash
+# 作为库
+go get github.com/zq-xu/gotools@latest
+
+# 作为 CLI
 go install github.com/zq-xu/gotools/cmd/gotools@latest
 ```
 
-或者本地构建：
+## 快速开始
 
 ```bash
-make build          # 产物在 bin/gotools
-make format         # 用 gotools format 整理本仓库的 import
+mkdir demo && cd demo
+go mod init demo
+go get github.com/zq-xu/gotools@latest
 ```
 
-### 作为库引入
+三件事做完即可跑起来，完整步骤与代码见 [docs/01-quickstart.md](docs/01-quickstart.md)：
 
-```bash
-go get github.com/zq-xu/gotools@v0.0.15
-```
+1. 准备一个 `config.yaml`（`logs`、`database`、`router` 三个段，用到账号时再加 `crypto`）；
+2. `configx.Setup("config.yaml")` 完成装配；
+3. `routerx.RegisterGroup(...)` 挂路由，`routerx.StartRouter(ctx, routerx.NewRouter())` 阻塞运行。
 
-```go
-import (
-    "github.com/zq-xu/gotools/configx"
-    "github.com/zq-xu/gotools/logx"
-    "github.com/zq-xu/gotools/storex"
-    "github.com/zq-xu/gotools/routerx"
-)
-```
+## 文档
 
-### 一个最小服务
-
-`config.yaml`：
-
-```yaml
-logs:
-  logLevel: info            # trace / debug / info / warn / error / fatal / panic
-
-database:
-  address: 127.0.0.1
-  port: 3306
-  username: root
-  password: root
-  database: gotools_demo
-  logLevel: 4               # GORM logger：1 Silent / 2 Error / 3 Warn / 4 Info
-
-router:
-  host: 0.0.0.0
-  port: 8080
-  disableTLS: true          # 生产环境去掉这行，并填 certPath / keyPath
-  certPath: server.pem
-  keyPath: server.key
-
-crypto:
-  aesKey: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="   # base64 编码的 32 字节密钥
-```
-
-`main.go`：
-
-```go
-package main
-
-import (
-	"context"
-
-	"github.com/gin-gonic/gin"
-
-	"github.com/zq-xu/gotools/configx"
-	"github.com/zq-xu/gotools/apix"
-	"github.com/zq-xu/gotools/apix/getx"
-	"github.com/zq-xu/gotools/routerx"
-	"github.com/zq-xu/gotools/storex/account" // 导入即注册 accounts 表，启动时 AutoMigrate
-)
-
-func main() {
-	// 一行装配：日志 + 数据库 + 路由配置 + 加密
-	if err := configx.Setup("config.yaml"); err != nil {
-		panic(err)
-	}
-
-	// 配置文件里没写 host/port 时补默认值（0.0.0.0:8080）
-	routerx.RouterConfig.OptDefalt()
-
-	routerx.RegisterGroup(
-		routerx.NewGroup("/api/v1").AddAPI(
-			&routerx.API{Method: "GET", Path: "/accounts", Handler: listAccounts},
-			&routerx.API{Method: "GET", Path: "/accounts/:id", Handler: getAccount},
-		),
-	)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// 阻塞运行；ctx 取消后 3 秒内优雅关闭。
-	// 想让 Ctrl+C / SIGTERM 生效，还需要自己把信号接到 cancel 上，例如 utilsx.Notify(cancel)。
-	if err := routerx.StartRouter(ctx, routerx.NewRouter()); err != nil {
-		panic(err)
-	}
-}
-
-func listAccounts(ctx *gin.Context) {
-	apix.ListHandler[account.Account](
-		ctx,
-		apix.DefaultListObjWithCount[account.Account],
-		apix.DefaultTransListObjToResp[account.Account, account.Account],
-	)
-}
-
-func getAccount(ctx *gin.Context) {
-	getx.GetHandler[account.Account, account.Account](
-		ctx, getx.NewDefaultConfig[account.Account, account.Account](),
-	)
-}
-```
-
-这两行 handler 就把"分页解析 → 参数过滤 → 排序 → 查询 → 计数 → 转响应"全串起来了。`UpdateHandler` / `DeleteHandler` 同理，只是多给一个改动/校验回调：
-
-```go
-func updateAccount(ctx *gin.Context) {
-	apix.UpdateHandler[account.Account, UpdateAccountParams](
-		ctx,
-		func(db database.Database, obj *account.Account, p *UpdateAccountParams) errorx.ErrorInfo {
-			obj.Name = p.Name
-			return nil
-		},
-	)
-}
-
-func deleteAccount(ctx *gin.Context) {
-	apix.DeleteHandler[account.Account](
-		ctx,
-		func(db database.Database, obj *account.Account) errorx.ErrorInfo {
-			return nil // 返回非 nil 即中断删除
-		},
-	)
-}
-```
-
-> 注意：`configx.Setup` 会按注册顺序初始化**已导入**的包。只要 import 了 `storex`，配置里就必须有 `database` 段，否则启动即失败。同理，`routerx` 需要 `router` 段。这是"注册式装配"的代价：依赖是隐式的，靠 import 决定。
-
-### 配置装配机制
-
-```mermaid
-flowchart LR
-    Y["config.yaml"] --> V["viper 读取"]
-    V --> R{"遍历注册表"}
-    R --> L["logs → logx.InitLogger"]
-    R --> D["database → gormkit.InitGorm"]
-    R --> RT["router → RouterConfig"]
-    R --> C["crypto → cryptox.Init（由 account 或应用注册）"]
-    L --> OK["应用就绪"]
-    D --> OK
-    RT --> OK
-    C --> OK
-```
-
-给自己的模块加配置段，只需要三行：
-
-```go
-var SampleConfig Sample
-
-type Sample struct {
-	Port int
-	Host string
-}
-
-func init() {
-	configx.Register("sample", &SampleConfig, func() error { return nil })
-}
-```
-
-配置文件里出现 `sample:` 段就会被自动填充；`RegisterByFile` 则是"配置里只写文件路径、内容单独放一个文件"的变体（适合证书、大块 JSON 之类）。完整示例见 `_examples/config`。
-
-## 关键约定
-
-### 分页与查询
-
-`typesx.GetListParams(ctx)` 从 query string 解析出一套标准参数：
-
-| 参数 | 含义 |
+| 文档 | 内容 |
 | --- | --- |
-| `pageNum` / `pageSize` | 页码（默认 1）/ 每页条数（默认 10） |
-| `sortBy` | `字段,方向`，多字段用 `:::` 分隔，例：`name,asc:::created_at,desc` |
-| `fuzzySearch` | 模糊搜索值，配合 `ListParams.FuzzySearchColumnList` 生效 |
-| 其它任意 key | 按"模型字段的 snake_case 名"精确过滤，匹配不到的字段静默忽略 |
-
-响应统一是：
-
-```json
-{ "pageNum": 2, "pageSize": 10, "pageCount": 3, "count": 25, "items": [ ... ] }
-```
-
-**排序键只接受普通标识符**（`^[A-Za-z_][A-Za-z0-9_]*$`），`sortBy` 里夹带 SQL 片段会被直接丢弃；过滤后一个都不剩时回退到默认的 `updated_at,desc`，因此 `ORDER BY` 永远不会是空串。这一层只防注入，不保证字段真实存在于模型上——需要确认字段归属时再调 `listParam.Validate(new(Account))`（`id` / `created_at` / `updated_at` 总是合法）。`apix` 的现成 handler 只做前者，后者要自己调。
-
-### Model 约定
-
-所有可持久化模型都嵌 `storex.Model`：
-
-```go
-type Model struct {
-	ID        int64 `gorm:"primarykey"`    // sonyflake 生成，不是自增
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"` // 软删除
-	Comment   string         `gorm:"size:512"`
-	Status    int
-}
-```
-
-三件配套的事：
-
-- `storex.GenerateModel()` 生成一个带雪花 ID 的新模型，别自己拼 ID。
-- `storex.RegisterTable(&X{})` 放在 `init()` 里，`InitGorm()` 时会统一自动迁移。
-- 表名用 `TableName()` 显式指定，不依赖 GORM 的复数推断。
-
-### 错误与状态码
-
-```go
-errorx.NewError(http.StatusBadRequest, "invalid parameters", err) // 自定义状态码
-storex.NewErrorInfoForGetError(err)                                // GORM 错误 → HTTP 错误
-```
-
-`gormkit` 里有一组 `NewErrorInfoForXxxError`，把常见错误映射成状态码：`ErrRecordNotFound` → 404，唯一键冲突 → 400，其余 → 500。`errorx.ErrorInfo` 同时满足 `error` 接口，所以既能往上传递，也能直接吐给前端。
-
-### 依赖方向
-
-一句话规则：**`cmd/` 与 `_examples/` 可以依赖任何库包；库包之间只能向下依赖，不能反向。** 新增包时先问一句"它属于哪一层"，再决定放哪儿。
-
-## 一次分页请求的路径
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as 客户端
-    participant R as gin 引擎
-    participant M as 中间件链
-    participant H as apix ListHandler
-    participant S as storex 数据访问层
-    participant G as GORM / MySQL
-
-    C->>R: GET /api/v1/accounts?pageNum=2&pageSize=10&sortBy=created_at,desc
-    R->>M: Recovery → 日志过滤 → gzip → CORS
-    M->>H: 校验通过，进入业务 handler
-    H->>H: 解析分页 / 排序 / 过滤条件（typesx.GetListParams）
-    H->>S: ListAssociationsWithCount(listParam, model)
-    S->>G: WHERE（字段白名单过滤）→ ORDER BY → LIMIT / OFFSET
-    G-->>S: 行数据 + 总数
-    S-->>H: []T, count
-    H-->>C: PageResponse（pageNum / pageSize / pageCount / count / items）
-```
+| [docs/README.md](docs/README.md) | 文档索引与阅读路径 |
+| [docs/01-quickstart.md](docs/01-quickstart.md) | 从零跑通一个最小 HTTP 服务 |
+| [docs/02-rest-api-service.md](docs/02-rest-api-service.md) | 示例服务 A：带 JWT 与审计的账号 REST API |
+| [docs/03-worker-service.md](docs/03-worker-service.md) | 示例服务 B：队列 + Worker 后台任务服务 |
+| [docs/04-cli-service.md](docs/04-cli-service.md) | 示例服务 C：cobra 命令行工具 |
+| [docs/05-config-and-logging.md](docs/05-config-and-logging.md) | 配置装配机制与日志 |
+| [docs/06-database.md](docs/06-database.md) | Model 约定、CRUD、事务、分页与排序 |
+| [docs/07-http.md](docs/07-http.md) | 引擎装配、路由组、中间件链、优雅关闭 |
+| [docs/08-auth-and-audit.md](docs/08-auth-and-audit.md) | JWT 认证、角色校验、审计日志与导出 |
+| [docs/09-crypto.md](docs/09-crypto.md) | AES 加解密装配与密钥管理 |
+| [docs/10-websocket.md](docs/10-websocket.md) | Hub 模式连接管理与消息广播 |
 
 ## CLI
 
@@ -378,51 +178,35 @@ sequenceDiagram
 gotools --help
 gotools --loglevel debug          # 全局日志级别
 
-gotools format --dir .            # 递归重排 import 分组（标准库 / 第三方 / 本模块）
+gotools format                    # 按 go.mod module path 重排 import 三组
+gotools format --dir .            # 或指定目录
 gotools format --file main.go
 
 gotools excel gantt plan.xlsx     # 读 Sheet1 的任务表，在 Sheet2 生成甘特图
 ```
 
-`format` 的判定规则来自 `go.mod` 里的 module path：import 里包含该前缀的归到"本模块"组，含 `.` 的归第三方组，其余归标准库组，三组之间留空行，最后再过一遍 `go/format`。它只处理 `import (` 块，不碰其它代码。
-
-`excel gantt` 期望 Sheet1 的第一行列名是 `Routes / GroupNo. / StartDate / EndDate`，日期用 `2026/1/1` 这种格式。
+`format` 只处理 `import (` 块：本模块前缀归一组、含 `.` 的归第三方组、其余归标准库组，组间留空行，最后过一遍 `go/format`。`excel gantt` 期望 Sheet1 首行列名为 `Routes / GroupNo. / StartDate / EndDate`，日期形如 `2026/1/1`。
 
 ## 开发
 
 ```bash
 make build            # go build -o bin/gotools ./cmd/gotools
-make format           # bin/gotools format（需要先 build）
+make format           # bin/gotools format（需先 build）
 go vet ./...
-go test ./...         # 少量单测：cryptox、processor、分页排序、错误映射、excel 导出
+go test ./...
+go build ./_examples/config ./_examples/cryptokit   # _examples 不在 ./... 里
 ```
 
-依赖版本以 `go.mod` 为准；`go.mod` 里声明的是 `go 1.27.4`。
+依赖版本以 `go.mod` 为准。
 
-## 结构演进
+## 已知限制
 
-早期 `gotools.go` 是根目录的 `package main`，导致模块根不可被 import、库与程序挤在同一层。现已调整为常规布局：
+写文档时如实列出，避免使用时踩坑：
 
-- 入口下沉到 `cmd/gotools/main.go`，安装方式随之变成 `go install github.com/zq-xu/gotools/cmd/gotools@latest`；
-- `cmd/format`、`cmd/excel` 的实现收进 `internal/cli/`，外部无法 import，可以自由重构；
-- `bricks/cryptox`、`bricks/processor` 拉平为顶层的 `cryptox`、`processor`（`bricks` 这一层没有实际分层意义）。
-
-**除 `bricks/*` 之外，对外包的 import 路径（`logx`、`configx`、`storex`、`routerx` 等）一个都没有变**，消费者无需改动；需要跟着改的是 `bricks/*` 的使用方——把 import 里的 `bricks/` 去掉即可。
-
-另有一次独立改名：**`fastapix` → `apix`**。原名字容易让人联想到 Python 的 FastAPI，而它其实就是 gin 上一层泛型 REST 辅助 handler。改为 `apix` 后与 `logx` / `configx` / `routerx` / `storex` 的 `x` 后缀惯例一致。因为当时还没有外部消费者，这一改影响面仅限仓库内部与本文档；`apix/getx` 子包的名称保持不变。
-
-### 行为变更（同批修复）
-
-- **记录不存在改为 404**：`NewErrorInfoForGetError` 之前把 `gorm.ErrRecordNotFound` 映射成 `400 not found`，现在是 404。前端如果按 400 做过特判，需要同步。
-- **`sortBy` 默认过滤非法键**：非标识符的排序键被丢弃，全部非法时回退 `updated_at,desc`；原始字符串不再进入 `ORDER BY`。
-- **`cryptox` 不再自己读配置**：去掉了对 `configx` 的依赖，改由 `cryptox.Init(cfg)` / `SetCrypto` 装配。`storex/account` 在 `init()` 里注册了 `crypto` 配置段，所以引用 account 的应用行为不变；只单独用 `cryptox` 的需要自己加一行注册（见 `_examples/cryptokit`）。`aesKey` 为空时跳过初始化、不会让启动失败，真正加密时会返回 `not initialized` 错误。
-- **`apix.DeleteHandler` 的 `validateFn` 允许为 nil**：之前传 nil 会在删除时 panic。
-
-## 现状与后续
-
-结构层面目前没有待办的整理项，`fastapix → apix` 的改名也已经落地。剩下两件属于"要不要做"而不是"要不要修"的事：
-
-- 打了 tag 之后才能 `go install`/`go get` 到固定版本。当前最新 tag 早于上面这批重构与修复，如果别的机器要拉，先打一个新 tag（`v0.0.16` 起）。
-- `configx` 在找不到配置段时会往 stdout 打一行提示，长期看更适合走 `logx` 的 debug 级别；不影响行为，可以等下次动 `configx` 时一并处理。
-
-后续如果要做长期运行的应用（例如基于 Kafka 消费任务的服务），建议**独立仓库**而不是塞进本库：库的 tag 发布节奏不该被应用的部署需求绑架，`go.mod` 也不该被拉进消息队列客户端这类重依赖。本地同时改库和应用时用 `go.work` 把两者串起来即可，不需要 `replace`。
+- **JWT 参数写死**：`routerx/auth` 里 `Key` 是常量 `"secret key"`、`Timeout` 为 1 小时，且没有配置段。用于真实环境前需要改这里或自行替换中间件。
+- **`apix.ListByRawGormHandler` 的计数与列表可能不一致**：总数走 `GetCount(模型)`，不包含 `queryFn` 里附加的 `WHERE`；如果 raw query 带额外条件，需要自己实现计数。
+- **`processor.Done()` 通道目前没有写入方**：拿它做完成信号不会触发，请用 `DoneLength()` / `WorkerOverview()` 观察进度。
+- **错误响应体是 JSON 字符串**：`ctx.JSON(status, ei.ErrorMessage())` 会输出 `"message"` 而不是 `{"error":"message"}`，需要统一结构就在 handler 里包一层。
+- **模型 ID 的 machine ID 固定为 128**：`utilsx` 里的 sonyflake 实例写死了 machine ID，单机安全，多台机器同时往同一张表写入时 ID 段会重叠。
+- **`configx` 缺段时向 stdout 打印一行提示**：`empty config found for <name>`，不影响运行，但会混进标准输出。
+- **`websocket` 不做鉴权**：`CheckOrigin` 恒返回 true，握手前需要自己校验 token。
