@@ -1,6 +1,6 @@
 module github.com/zq-xu/gotools
 
-go 1.25.0
+go 1.27.4
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.10.3
