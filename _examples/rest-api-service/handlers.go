@@ -26,13 +26,13 @@ type CreateAccountParams struct {
 func createAccount(ctx *gin.Context) {
 	p := new(CreateAccountParams)
 	if err := ctx.ShouldBindJSON(p); err != nil {
-		ctx.JSON(http.StatusBadRequest, err.Error())
+		ctx.JSON(http.StatusBadRequest, errorx.ResponseBody{Error: err.Error()})
 		return
 	}
 
 	cipherPwd, err := cryptox.Encrypt([]byte(p.Password))
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err.Error())
+		ctx.JSON(http.StatusInternalServerError, errorx.ResponseBody{Error: err.Error()})
 		return
 	}
 
@@ -56,7 +56,7 @@ func createAccount(ctx *gin.Context) {
 		return nil
 	})
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 

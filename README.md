@@ -67,7 +67,7 @@ flowchart TB
 
 1. **一域一包，统一 `x` 后缀** —— `logx`、`configx`、`routerx` 等避免与标准库或第三方包在 import 处撞名。
 2. **装配靠注册，不靠手工调用** —— 各包在 `init()` 里向 `configx` 注册「配置段 + 初始化函数」，应用只需 `configx.Setup("config.yaml")`，日志、数据库、路由、加密按注册表依次就绪；代价是依赖隐式：**import 了什么，配置里就必须有什么段**。
-3. **错误只有一个形状** —— 对外错误一律 `errorx.ErrorInfo`（状态码 + 消息 + 原始 error），handler 里只有一句 `ctx.JSON(ei.StatusCode(), ei.ErrorMessage())`。
+3. **错误只有一个形状** —— 对外错误一律 `errorx.ErrorInfo`（状态码 + 消息 + 原始 error），handler 里只有一句 `ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))`，响应体固定为 `{"error": "<message>"}`。
 4. **依赖只向下** —— 基础层不知道存储层，存储层不知道 HTTP 层；`cmd/`、`_examples/`、`docs/` 可以依赖库，库永不反向依赖它们。
 
 目录约定：`cmd/` 只放入口，命令实现在 `internal/`（外部不可 import）；以 `_` 开头的目录会被 Go 工具链忽略，用于存放不参与 `./...` 构建的示例与预留位；`docs/` 只放 Markdown，代码一律留在 `_examples/` 里。
@@ -166,10 +166,7 @@ go vet ./...
 
 ## 已知限制
 
-- **JWT 参数写死**：`routerx/auth` 的 `Key` 为常量 `"secret key"`、超时 1 小时且无配置段，真实环境使用前需修改或自行替换中间件。
-- **`apix.ListByRawGormHandler` 计数可能与列表不一致**：总数走 `GetCount(模型)`，不含 `queryFn` 附加的 `WHERE`；带额外条件时需自行实现计数。
-- **`processor.Done()` 没有写入方**：不能作为完成信号，请用 `DoneLength()` / `WorkerOverview()` 观察进度。
-- **错误响应体是 JSON 字符串**：`ctx.JSON(status, ei.ErrorMessage())` 输出 `"message"` 而非 `{"error":"message"}`，需要统一结构请在 handler 里包一层。
-- **模型 ID 的 machine ID 固定为 128**：sonyflake 实例写死 machine ID，单机安全，多机写同一张表时 ID 段会重叠。
-- **`configx` 缺段时向 stdout 打印提示**：`empty config found for <name>`，不影响运行但会混入标准输出。
-- **`websocket` 不做鉴权**：`CheckOrigin` 恒返回 true，握手前需自行校验 token。
+- **JWT 密钥默认值**：不传 `routerx.WithKey` 时沿用开发用默认密钥（启动打 warn 日志），生产环境必须显式指定；`TokenLookup` / `TokenHeadName` 固定。
+- **sonyflake machine ID 需按实例区分**：默认按 `GOTOLS_MACHINE_ID` 环境变量 → 私网 IPv4 低 16 位 → hostname 哈希推导，多机写同一张表时请为每台机器设置互不相同的 `GOTOLS_MACHINE_ID`。
+- **`websocket` 只做 Origin 校验**：默认仅放行同源，token 鉴权仍需通过 `websocket.SetCheckOrigin(fn)` 或握手前的 handler 自行实现；无心跳、单进程等语义见 [docs/10](docs/10-websocket.md)。
+- **`apix` 不提供 Create handler**，审计记录的 `UserID / UserName` 恒为空（见 [docs/02](docs/02-rest-api-service.md)）。

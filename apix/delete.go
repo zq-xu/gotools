@@ -18,7 +18,7 @@ func DeleteHandler[T any](ctx *gin.Context, validateFn func(database.Database, *
 
 	ei := delete(ctx, id, validateFn)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 

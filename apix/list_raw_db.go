@@ -18,13 +18,13 @@ func ListByRawGormHandler[T any](ctx *gin.Context,
 	transFn func(count int, listParam *typesx.ListParams, listObj []T) (*typesx.PageResponse, errorx.ErrorInfo)) {
 	listParam, ei := typesx.GetListParams(ctx)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 
 	resp, ei := listByRawGorm(ctx, listParam, queryFn, transFn)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 
@@ -34,12 +34,19 @@ func ListByRawGormHandler[T any](ctx *gin.Context,
 func listByRawGorm[T any](ctx context.Context, listParam *typesx.ListParams,
 	queryFn func(db *gorm.DB, listParam *typesx.ListParams) *gorm.DB,
 	transFn func(count int, listParam *typesx.ListParams, listObj []T) (*typesx.PageResponse, errorx.ErrorInfo)) (*typesx.PageResponse, errorx.ErrorInfo) {
-	count, err := storex.DB(ctx).GetCount(new(T), listParam)
-	if err != nil {
+	listObj := make([]T, 0)
+
+	// 计数与列表使用同一套条件：queryFn 附加的 WHERE + 查询条件 + 模糊搜索，
+	// 分页（Limit/Offset/Order）除外，保证 total 与列表一致。
+	countDB := queryFn(storex.GormDB(ctx), listParam)
+	countDB = storex.GenerateDBForQuery(countDB, listParam, &listObj)
+	countDB = storex.OptFuzzySearchDB(countDB, nil, listParam.FuzzySearchValue)
+
+	var count int64
+	if err := countDB.Session(&gorm.Session{}).Model(new(T)).Count(&count).Error; err != nil {
 		return nil, errorx.NewError(http.StatusBadRequest, "get count failed", err)
 	}
 
-	listObj := make([]T, 0)
 	db := queryFn(storex.GormDB(ctx), listParam)
 	db = storex.GenerateDBForQuery(db, listParam, &listObj)
 	db = storex.OptFuzzySearchDB(db, nil, listParam.FuzzySearchValue)

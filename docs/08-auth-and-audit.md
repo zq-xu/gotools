@@ -42,7 +42,7 @@ type AuthAccount interface {
 | `/auth/refresh` | POST | 挂在 `jwtMW.RefreshHandler` 上，用旧 token 换新 token |
 | `/accounts/me` | GET | `routerx.GetAccountInfoHandler`，回显当前用户信息 |
 
-登录失败时 gin-jwt 走 `Unauthorized`：普通错误返回 `{"errorCode":401,"errorMessage":"..."}`，token 过期则返回 `"token expired"`（字符串）。两种形状并存是 gin-jwt 的既有行为。
+登录失败时 gin-jwt 走 `Unauthorized`：普通错误与 token 过期都返回 `{"errorCode":401,"errorMessage":"..."}`，形状一致。
 
 ### token 里有什么
 
@@ -82,17 +82,23 @@ if roles := routerx.GetUserInfoFromToken(ctx).Roles; !slices.Contains(roles, "ad
 }
 ```
 
-### JWT 参数是写死的
+### JWT 参数通过 Option 配置
 
 ```go
-Key:           []byte("secret key")   // ← 常量
-Timeout:       time.Hour
-MaxRefresh:    time.Hour * 100
+routerx.InitAuthMiddleware(account.LoadLoginAccount,
+	routerx.WithKey(os.Getenv("JWT_SECRET")), // 生产必须设置，缺省会用开发用默认密钥并打 warn
+	routerx.WithTimeout(time.Hour),
+	routerx.WithMaxRefresh(time.Hour*100),
+)
+
+Key:           o.Key        // 默认 "secret key"（不安全，仅限开发）
+Timeout:       o.Timeout    // 默认 1 小时
+MaxRefresh:    o.MaxRefresh // 默认 100 小时
 TokenLookup:   "header: Authorization, query: token, cookie: jwt"
 TokenHeadName: "Bearer"
 ```
 
-目前没有配置段。用于真实环境前，要么改 `routerx/auth/middleware.go`，要么不用这个封装、自己建 `jwt.GinJWTMiddleware`。这是本库当前最明确的待改项。
+不传 Option 时保持历史默认值并打印 warn 日志；`TokenLookup` / `TokenHeadName` 仍是固定值，需要别的取 token 方式就自己建 `jwt.GinJWTMiddleware`。
 
 ## 审计
 

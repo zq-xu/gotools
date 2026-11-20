@@ -40,3 +40,17 @@ func (ei *errorInfo) Error() string {
 func (ei *errorInfo) ErrorMessage() string {
 	return ei.Error()
 }
+
+// ResponseBody 统一的错误响应体，序列化为 {"error": "<message>"}，
+// 避免 ctx.JSON 直接输出裸 JSON 字符串。
+type ResponseBody struct {
+	Error string `json:"error"`
+}
+
+// NewResponseBody 把 ErrorInfo 转成统一的错误响应体。ei 为 nil 时返回空消息。
+func NewResponseBody(ei ErrorInfo) ResponseBody {
+	if ei == nil {
+		return ResponseBody{}
+	}
+	return ResponseBody{Error: ei.ErrorMessage()}
+}

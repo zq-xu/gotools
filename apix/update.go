@@ -24,7 +24,7 @@ func UpdateHandler[T any, P any](ctx *gin.Context, optFn func(db database.Databa
 
 	ei := update(ctx, id, reqParams, optFn)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 

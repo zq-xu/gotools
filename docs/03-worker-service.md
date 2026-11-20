@@ -59,7 +59,7 @@ type Picker interface {
 | `DoneLength()` | 已完成任务计数，`int64`，只增不减 |
 | `WorkerOverview()` | 每个 worker 的已完成数量，`[]int64`，长度 5 |
 
-`p.Done()` 返回 `chan bool`（缓冲 1），但**当前实现没有任何地方往里写**，别拿它当完成通知用。
+`p.Done()` 返回 `chan bool`（缓冲 1），在 `Stop()` / ctx 取消、**所有 worker 退出之后**收到一次信号，可以直接当完成通知用：`<-p.Done()`。
 
 示例里用 `utilsx.Notify(cancel)` 把 SIGINT/SIGTERM 转成 ctx 取消：
 

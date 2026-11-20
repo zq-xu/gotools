@@ -105,7 +105,7 @@ sequenceDiagram
 | --- | --- |
 | `failed to setup database` | 配置里缺 `database` 段。import 了 `storex` 就必须提供 |
 | 启动后表不存在 | 模型没有 `storex.RegisterTable(&X{})`，或定义它的包没被 import |
-| `empty config found for ...` 打印在 stdout | 正常提示，该段为空；不需要就去掉对应 import |
+| `empty config found for ...` 以 warn 出现在日志里 | 正常提示，该段为空；不需要就去掉对应 import |
 | 端口被占用 | 改 `router.port`，或先停掉占用进程 |
 | `cannot find GOROOT directory` | shell 里残留了指向已删除目录的 `GOROOT`，用 `env -u GOROOT go run .` |
 

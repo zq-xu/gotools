@@ -28,13 +28,13 @@ type ResponseOfAuditLog struct {
 func ListAuditLog(ctx *gin.Context) {
 	reqParams, ei := typesx.GetListParams(ctx)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 
 	resp, ei := listAuditLog(ctx, reqParams)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 

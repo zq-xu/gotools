@@ -14,6 +14,29 @@ type TestPicker struct {
 
 func (tp *TestPicker) Pickup(i interface{}) {}
 
+// go test -v  -test.run TestProcessorDone -count=1
+func TestProcessorDone(t *testing.T) {
+	Convey("TestProcessorDone", t, func() {
+		p, err := NewProcessor(func() (Picker, error) { return &TestPicker{}, nil })
+		So(err, ShouldBeNil)
+
+		go p.Start(context.Background())
+
+		for i := 0; i < 10; i++ {
+			p.Push(i)
+		}
+
+		time.Sleep(time.Millisecond * 50)
+		p.Stop()
+
+		select {
+		case <-p.Done():
+		case <-time.After(time.Second):
+			t.Fatal("Done() should signal after all workers exit")
+		}
+	})
+}
+
 // go test -v  -test.run TestProcessor -count=1
 func TestProcessor(t *testing.T) {
 	Convey("TestProcessor", t, func() {

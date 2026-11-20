@@ -27,6 +27,45 @@ var (
 	accountLoader func(ctx context.Context, username, password string) (AuthAccount, errorx.ErrorInfo)
 )
 
+// Options JWT 中间件可配置项，零值时使用默认值。
+type Options struct {
+	// Key 签名密钥，为空时使用不安全的默认值（仅限开发环境）。
+	Key []byte
+	// Timeout token 有效期，为 0 时默认 1 小时。
+	Timeout time.Duration
+	// MaxRefresh 可刷新窗口，为 0 时默认 100 小时。
+	MaxRefresh time.Duration
+}
+
+type Option func(*Options)
+
+// WithKey 指定 JWT 签名密钥。
+func WithKey(key string) Option {
+	return func(o *Options) {
+		o.Key = []byte(key)
+	}
+}
+
+// WithTimeout 指定 token 有效期。
+func WithTimeout(d time.Duration) Option {
+	return func(o *Options) {
+		o.Timeout = d
+	}
+}
+
+// WithMaxRefresh 指定 token 可刷新窗口（需不小于 Timeout）。
+func WithMaxRefresh(d time.Duration) Option {
+	return func(o *Options) {
+		o.MaxRefresh = d
+	}
+}
+
+const (
+	defaultKey        = "secret key"
+	defaultTimeout    = time.Hour
+	defaultMaxRefresh = time.Hour * 100
+)
+
 type LoginAccount struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
@@ -51,15 +90,31 @@ func Middleware() (*jwt.GinJWTMiddleware, error) {
 	return middleware, nil
 }
 
-// InitAuthMiddleware
-func InitAuthMiddleware(loader func(ctx context.Context, username, password string) (AuthAccount, errorx.ErrorInfo)) {
+// InitAuthMiddleware 初始化 JWT 中间件，可用 Option 覆盖 Key / Timeout / MaxRefresh。
+func InitAuthMiddleware(loader func(ctx context.Context, username, password string) (AuthAccount, errorx.ErrorInfo), opts ...Option) {
 	var err error
 	accountLoader = loader
 
+	o := Options{}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	if len(o.Key) == 0 {
+		o.Key = []byte(defaultKey)
+		log.Printf("routerx/auth: using default JWT key, use auth.WithKey to set a real one in production")
+	}
+	if o.Timeout <= 0 {
+		o.Timeout = defaultTimeout
+	}
+	if o.MaxRefresh <= 0 {
+		o.MaxRefresh = defaultMaxRefresh
+	}
+
 	middleware, err = jwt.New(&jwt.GinJWTMiddleware{
-		Key:             []byte("secret key"),
-		Timeout:         time.Hour,
-		MaxRefresh:      time.Hour * 100,
+		Key:             o.Key,
+		Timeout:         o.Timeout,
+		MaxRefresh:      o.MaxRefresh,
 		IdentityKey:     "account",
 		PayloadFunc:     generatePayLoad,
 		IdentityHandler: identityHandler,
@@ -137,7 +192,10 @@ func identityHandler(ctx *gin.Context) interface{} {
 
 func unauthorized(ctx *gin.Context, code int, message string) {
 	if strings.Contains(strings.ToLower(message), "expired") {
-		ctx.JSON(http.StatusUnauthorized, "token expired")
+		ctx.JSON(http.StatusUnauthorized, &UnauthorizedResp{
+			Code:    http.StatusUnauthorized,
+			Message: "token expired",
+		})
 		return
 	}
 

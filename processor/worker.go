@@ -2,6 +2,7 @@ package processor
 
 import (
 	"context"
+	"sync/atomic"
 )
 
 type Worker interface {
@@ -52,15 +53,20 @@ func (w *worker) Do(ctx context.Context) {
 			return
 		default:
 			i := w.queue.Pop()
+			if i == nil {
+				// 队列 channel 已关闭，退出
+				return
+			}
+
 			w.picker.Pickup(i)
 			if w.callback != nil {
 				w.callback()
 			}
-			w.doneLength++
+			atomic.AddInt64(&w.doneLength, 1)
 		}
 	}
 }
 
 func (w *worker) DoneLength() int64 {
-	return w.doneLength
+	return atomic.LoadInt64(&w.doneLength)
 }

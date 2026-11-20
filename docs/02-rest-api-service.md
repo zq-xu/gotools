@@ -189,7 +189,7 @@ if !slices.Contains(routerx.GetUserInfoFromToken(ctx).Roles, "admin") {
 
 ## 已知限制
 
-- `routerx/auth` 的 JWT `Key` 与 `Timeout` 写死，真实环境前需要改库或替换中间件（见 [08](08-auth-and-audit.md)）。
+- `routerx/auth` 的 `TokenLookup` / `TokenHeadName` 仍固定，需要别的取 token 方式要自己建 `jwt.GinJWTMiddleware`（`Key` / `Timeout` / `MaxRefresh` 已可配置，见 [08](08-auth-and-audit.md)）。
 - 审计记录里 `UserID / UserName` 目前恒为空。
 - `apix` 不提供 Create handler，也不提供批量操作。
 

@@ -2,7 +2,6 @@ package configx
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/rotisserie/eris"
@@ -98,7 +97,7 @@ func loadConfigFromFilePath(v *viper.Viper, item *setupItem) error {
 func loadConfigFromSub(v *viper.Viper, item *setupItem) error {
 	sub := v.Sub(item.name)
 	if sub == nil {
-		fmt.Println("empty config found for", item.name)
+		logx.Logger.Warnf("empty config found for %s", item.name)
 		return nil
 	}
 

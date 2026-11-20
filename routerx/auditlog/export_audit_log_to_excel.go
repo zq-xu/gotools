@@ -46,13 +46,13 @@ func init() {
 func ExportAuditLog(ctx *gin.Context) {
 	reqParams, ei := typesx.GetListParams(ctx)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 
 	data, ei := exportAuditLog(ctx, reqParams)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 

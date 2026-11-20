@@ -84,7 +84,7 @@ websocket.GlobalManager.Info()
 
 ## 已知限制
 
-- **无鉴权**：`NewConnFromGin` 的 `CheckOrigin` 恒为 `true`，任何站点都能连。要在握手前校验 token，就在 handler 里先读 `Authorization` 或 `?token=`，失败直接返回，不要调用 `NewConnFromGin`。
+- **Origin 默认只放行同源**：`NewConnFromGin` 校验 `Origin` 与请求 `Host` 一致（无 Origin 头的非浏览器客户端直接放行）；跨站接入用 `websocket.SetCheckOrigin(fn)` 覆盖，`fn` 收到 `*http.Request`，可以在里面读 `Authorization` 或 `?token=` 做鉴权，`websocket.AllowAllOrigins()` 关闭校验（公网勿用）。
 - **无心跳**：客户端没有 ping/pong，死连接要等下一次读失败才会被清理；长时间空闲的场景需要自己定时发 ping。
 - **`Close` 之后再发消息会 panic**：注销时 `client.Message` 会被关闭，而 `consumeMessage` 系列没有 recover。业务侧应先从组里移除再停发。
 - **单进程**：连接表在内存里，多副本部署时组播只在本进程生效；跨实例广播需要 Redis pub/sub 之类的外部总线。

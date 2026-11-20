@@ -29,7 +29,7 @@ func UpdateByRawGormHandler[T any, P any](ctx *gin.Context,
 
 	ei := updateByRawGorm(ctx, id, reqParams, queryFn, optFn, afterUpdateFn)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 

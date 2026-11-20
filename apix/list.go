@@ -30,7 +30,7 @@ func ListHandler[T any](ctx *gin.Context,
 	opts ...listOpts) {
 	listParam, ei := typesx.GetListParams(ctx)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 
@@ -40,7 +40,7 @@ func ListHandler[T any](ctx *gin.Context,
 
 	pageInfo, ei := list(ctx, listParam, queryFn, transFn)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 

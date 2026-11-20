@@ -38,7 +38,7 @@ func init() {
 - **`RegisterTable` 必须在 `init()` 里**，且定义模型的包必须被 import，否则表不会被创建。
 - **表名一律显式 `TableName()`**，不依赖 GORM 的复数推断。
 
-> sonyflake 的 machine ID 在 `utilsx` 里固定为 `128`。单机多进程没问题；**多台机器同时写同一张表时 ID 段会重叠**，真要多写就要给每台机器分配不同的 machine ID（改 `utilsx/uuid.go`）。
+> sonyflake 的 machine ID 在 `utilsx` 里按「环境变量 `GOTOLS_MACHINE_ID` → 私网 IPv4 低 16 位 → hostname 哈希」推导，兜底 128。单机多进程没问题；**多台机器同时写同一张表时，部署前给每台机器设置互不相同的 `GOTOLS_MACHINE_ID`（0~65535）**，否则 ID 段仍可能重叠。
 
 ## Database 接口
 
@@ -139,7 +139,7 @@ listParam, ei := typesx.GetListParams(ctx)
 if ei != nil { /* 400 */ }
 
 if ei := listParam.Validate(new(Project)); ei != nil {
-	ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+	ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 	return
 }
 ```

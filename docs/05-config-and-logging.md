@@ -54,7 +54,7 @@ func Setup(filename string) error   // 读文件 → 遍历注册表 → 每项�
    routerx.RouterConfig.OptDefalt()   // host 默认 0.0.0.0，port 默认 8080
    ```
 
-2. **缺段时向 stdout 打一行提示。** `empty config found for <name>` 是 `fmt.Println`，不经过 logger，也不影响运行——容器里混进非 JSON 日志时通常就是它。
+2. **缺段时走 logger 打一条 warn。** `empty config found for <name>` 由 `logx.Logger` 输出（有统一格式，级别 warn），不影响运行——不需要该段就去掉对应 import。
 
 ## 自定义配置段
 

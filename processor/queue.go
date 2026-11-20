@@ -44,7 +44,9 @@ func NewQueue(opts ...queueOpt) Queue {
 }
 
 func (q *queue) Start(ctx context.Context) {
+	q.lock.Lock()
 	q.ctx, q.cancel = context.WithCancel(ctx)
+	q.lock.Unlock()
 
 	for {
 		select {
@@ -54,11 +56,17 @@ func (q *queue) Start(ctx context.Context) {
 		default:
 			i := q.pop()
 
-			if !q.closed && i != nil {
+			if i != nil && !q.isClosed() {
 				q.C <- i
 			}
 		}
 	}
+}
+
+func (q *queue) isClosed() bool {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+	return q.closed
 }
 
 func (q *queue) pop() interface{} {
@@ -83,7 +91,9 @@ func (q *queue) Stop() {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
-	q.cancel()
+	if q.cancel != nil {
+		q.cancel()
+	}
 	q.closed = true
 	q.cond.Signal()
 }

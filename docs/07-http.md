@@ -84,19 +84,19 @@ routerx.SetHealthHandler(func(ctx *gin.Context) {
 
 ```go
 if ei != nil {
-	ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+	ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 	return
 }
 ```
 
-注意 `ctx.JSON` 收到 `string` 时会编码成 **JSON 字符串**，所以错误响应体是 `"invalid parameters"`，而不是 `{"error":"..."}`：
+`apix` / `getx` 的内置 handler 已全部走 `errorx.NewResponseBody`，响应体统一为 `{"error": "<message>"}`：
 
 ```bash
 curl -s 'localhost:8080/api/v1/accounts?pageNum=abc'
-# "PageNum is invalid. strconv.Atoi: parsing \"abc\": invalid syntax"
+# {"error":"PageNum is invalid. strconv.Atoi: parsing \"abc\": invalid syntax"}
 ```
 
-前端如果要统一错误结构，就在自己的 handler 里包一层 `gin.H{"error": ei.ErrorMessage()}`；库内不改，因为现有调用方（含示例）都按这个形状写。
+自己的 handler 里同样传 `errorx.NewResponseBody(ei)`；只有裸 `error` 时用 `errorx.ResponseBody{Error: err.Error()}`，前后拿到的结构就一致了。
 
 ## 生命周期
 
@@ -132,7 +132,7 @@ err := routerx.StartRouter(ctx, routerx.NewRouter())
 - **Update 返回值固定 201**，与 HTTP 语义不完全一致，但库内保持统一，前端按状态码判断时注意；
 - `DeleteHandler` 的 `validateFn` 允许为 nil（历史版本传 nil 会 panic）。
 
-`ListByRawGormHandler` 的计数是已知限制：总数走 `GetCount(模型)`，**不包含** `queryFn` 里附加的 `WHERE`。带额外条件时自己算 count：
+`ListByRawGormHandler` 的总数与列表用同一套条件计算：`queryFn` 附加的 `WHERE`、查询条件、模糊搜索都计入，只排除分页：
 
 ```go
 apix.ListByRawGormHandler[Order](ctx,
@@ -143,7 +143,7 @@ apix.ListByRawGormHandler[Order](ctx,
 )
 ```
 
-此时 `count` 会偏大（统计了全部状态），列表却只有 `status=1` 的行。
+此时 `count` 只统计 `status=1` 的行，与列表一致。
 
 ## 完整示例
 

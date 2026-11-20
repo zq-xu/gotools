@@ -53,20 +53,20 @@ func GetByRawGormHandler[T any, R any](ctx *gin.Context,
 	if cfg.ValidateFn != nil {
 		ei := cfg.ValidateFn(ctx)
 		if ei != nil {
-			ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+			ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 			return
 		}
 	}
 
 	obj, ei := cfg.QueryFn(storex.GormDB(ctx), id)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 
 	resp, ei := cfg.TransFn(obj)
 	if ei != nil {
-		ctx.JSON(ei.StatusCode(), ei.ErrorMessage())
+		ctx.JSON(ei.StatusCode(), errorx.NewResponseBody(ei))
 		return
 	}
 
