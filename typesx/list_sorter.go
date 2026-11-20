@@ -3,6 +3,7 @@ package typesx
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -22,6 +23,9 @@ const (
 var (
 	orderList      = []string{"asc", "ascending", "desc", "descending"}
 	baseConditions = []string{"updated_at", "created_at", "id"}
+
+	// sortKeyPattern 限制排序键只能是普通标识符，杜绝 "sortBy" 里塞进 SQL 片段。
+	sortKeyPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 )
 
 type sorter struct {
@@ -44,6 +48,11 @@ func NewSorter(sortQuery string) *sorter {
 			continue
 		}
 		res = append(res, sc)
+	}
+
+	// 全部非法（或没给）时回退到默认排序，保证分页结果稳定，且 ORDER BY 不会为空。
+	if len(res) == 0 {
+		res = append(res, generateCondition(defaultSortStr))
 	}
 
 	s := &sorter{conditions: res}
@@ -73,6 +82,11 @@ func generateCondition(str string) sortCondition {
 
 	if order == "" {
 		order = asc
+	}
+
+	// 非法键直接丢弃，避免未经校验的字符串进入 ORDER BY。
+	if !sortKeyPattern.MatchString(condition) {
+		return sortCondition{}
 	}
 
 	return sortCondition{

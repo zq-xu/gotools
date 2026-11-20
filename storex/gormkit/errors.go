@@ -12,7 +12,7 @@ import (
 func NewErrorInfoForGetError(err error) errorx.ErrorInfo {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errorx.NewError(http.StatusBadRequest, "not found", err)
+			return errorx.NewError(http.StatusNotFound, "not found", err)
 		}
 
 		return errorx.NewError(http.StatusInternalServerError, "unexpected error during get detail", err)

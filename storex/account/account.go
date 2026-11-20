@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/zq-xu/gotools/configx"
 	"github.com/zq-xu/gotools/cryptox"
 	"github.com/zq-xu/gotools/errorx"
 	"github.com/zq-xu/gotools/routerx/auth"
@@ -29,6 +30,12 @@ type Account struct {
 
 func init() {
 	storex.RegisterTable(&Account{})
+
+	// 账号密码以 AES 密文存储，因此 crypto 配置段由本包负责注册。
+	// 只用 cryptox、不引用本包的应用，自行注册同样的一行即可。
+	configx.Register("crypto", &cryptox.CryptoConfig, func() error {
+		return cryptox.Init(cryptox.CryptoConfig)
+	})
 }
 
 func (u *Account) TableName() string {
@@ -53,7 +60,7 @@ func LoadLoginAccount(ctx context.Context, username, password string) (auth.Auth
 		return nil, errorx.NewError(http.StatusBadRequest, "unexpected error", err)
 	}
 
-	str, err := cryptox.Crypto.Decrypt(obj.Password)
+	str, err := cryptox.Decrypt(obj.Password)
 	if err != nil {
 		return nil, errorx.NewError(http.StatusInternalServerError, "failed to decrypt passowrd", err)
 	}

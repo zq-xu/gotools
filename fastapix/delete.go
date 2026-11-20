@@ -39,9 +39,11 @@ func delete[T any](ctx *gin.Context, id string, validateFn func(database.Databas
 			return errorx.NewError(http.StatusInternalServerError, "unexpected error during get detail", err)
 		}
 
-		ei := validateFn(db, obj)
-		if ei != nil {
-			return ei
+		if validateFn != nil {
+			ei := validateFn(db, obj)
+			if ei != nil {
+				return ei
+			}
 		}
 
 		err = db.DeleteAssociations(obj, id)

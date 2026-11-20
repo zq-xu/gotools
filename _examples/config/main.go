@@ -18,7 +18,7 @@ func init() {
 }
 
 func main() {
-	err := configx.Setup("configx.yaml")
+	err := configx.Setup("config.yaml")
 	if err != nil {
 		panic(err)
 	}

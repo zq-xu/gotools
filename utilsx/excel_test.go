@@ -9,8 +9,8 @@ import (
 
 // go test -v \
 // excel.go excel_test.go \
-// -test.run TestExportToPath -count=1
-func TestExportToPath(t *testing.T) {
+// -test.run TestExportToDir -count=1
+func TestExportToDir(t *testing.T) {
 	dataKey := make([]map[string]string, 0)
 	dataKey = append(dataKey, map[string]string{
 		"key":    "id",
@@ -42,10 +42,10 @@ func TestExportToPath(t *testing.T) {
 		})
 	}
 
-	Convey("TestExportToPath", t, func() {
-		Convey("TestExportToPath.Local", func() {
+	Convey("TestExportToDir", t, func() {
+		Convey("TestExportToDir.Local", func() {
 			ee := NewExcelExport("as1")
-			_, err := ee.ExportToPath(dataKey, data, "./")
+			_, err := ee.ExportToDir(dataKey, data, t.TempDir())
 			So(err, ShouldBeNil)
 		})
 	})
