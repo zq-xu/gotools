@@ -18,16 +18,7 @@ stack   gin · GORM · MySQL · viper · logrus · cobra
 | HTTP 层 | `routerx` `apix` `websocket` | 引擎装配、路由组 DSL、JWT、审计、泛型 CRUD、连接管理 |
 | 通用件 | `cryptox` `processor` `utilsx` | AES 加解密、队列 + Worker 池、杂项工具 |
 
-## 设计约定
-
-四条约定贯穿全部包，读懂它们剩下的看代码即可：
-
-1. **一域一包，统一 `x` 后缀。** `logx`、`configx`、`errorx`、`typesx`、`utilsx`、`storex`、`routerx`、`apix` —— 避免与标准库或第三方包的 `log`、`config`、`router` 在 import 处撞名。
-2. **装配靠注册，不靠手工调用。** 各包在自己的 `init()` 里向 `configx` 注册「配置段 + 初始化函数」；应用只需 `configx.Setup("config.yaml")`，日志、数据库、路由、加密按注册表依次就绪。代价是依赖隐式：**import 了什么，配置里就必须有什么段**。
-3. **错误只有一个形状。** 对外错误一律 `errorx.ErrorInfo`（HTTP 状态码 + 消息 + 原始 error），handler 里只有一句 `ctx.JSON(ei.StatusCode(), ei.ErrorMessage())`。
-4. **依赖只向下。** 基础层不知道存储层，存储层不知道 HTTP 层；`cmd/`、`_examples/`、`docs/` 可以依赖库，库永不反向依赖它们。
-
-## 分层架构
+## 架构
 
 ```mermaid
 flowchart TB
@@ -72,49 +63,14 @@ flowchart TB
 
 箭头即依赖方向。越靠下越稳定，改动成本也越高：`utilsx` 里改一个函数签名，上面四层都会跟着响。
 
-## 目录结构
+四条设计约定贯穿全部包，读懂它们其余看代码即可：
 
-```
-gotools/
-├── cmd/gotools/main.go       # 唯一可执行入口（5 行）
-├── internal/cli/             # 命令实现，外部不可 import
-│   ├── root.go               #   根命令 + 全局 --loglevel
-│   ├── format/               #   gotools format
-│   └── excel/gantt/          #   gotools excel gantt
-│
-├── logx/                     # logrus + 自定义 formatter
-├── configx/                  # viper 注册式装配
-├── errorx/                   # 带状态码的错误模型
-├── typesx/                   # 分页 / 排序 / 响应类型
-├── utilsx/                   # 拷贝、指针、时间、文件、Excel、UUID
-│
-├── storex/                   # 数据访问
-│   ├── database/             #   Database 接口（唯一需要 mock 的边界）
-│   ├── gormkit/              #   GORM 实现、事务、Model、迁移、错误映射
-│   └── account/              #   内置账号模型 + 登录校验
-├── routerx/                  # gin 引擎装配
-│   ├── auth/                 #   JWT 认证中间件
-│   └── auditlog/             #   审计日志（中间件 + 查询 + Excel 导出）
-├── apix/                     # 泛型 CRUD handler（getx/、list、update、delete）
-├── websocket/                # Hub 模式连接管理
-│
-├── cryptox/                  # AES-128/192/256 CBC + PKCS#7
-├── processor/                # 队列 + 固定 Worker 池
-│
-├── docs/                     # 使用文档，按场景组织
-├── _examples/                # 可直接 go run 的示例，不参与 ./... 构建
-│   ├── quickstart/           #   → docs/01
-│   ├── rest-api-service/     #   → docs/02
-│   ├── worker-service/       #   → docs/03
-│   ├── cli-service/          #   → docs/04
-│   ├── config/               #   配置段清单示例
-│   └── cryptokit/            #   加解密最小示例
-├── _demos/                   # 预留
-├── Makefile
-└── go.mod
-```
+1. **一域一包，统一 `x` 后缀** —— `logx`、`configx`、`routerx` 等避免与标准库或第三方包在 import 处撞名。
+2. **装配靠注册，不靠手工调用** —— 各包在 `init()` 里向 `configx` 注册「配置段 + 初始化函数」，应用只需 `configx.Setup("config.yaml")`，日志、数据库、路由、加密按注册表依次就绪；代价是依赖隐式：**import 了什么，配置里就必须有什么段**。
+3. **错误只有一个形状** —— 对外错误一律 `errorx.ErrorInfo`（状态码 + 消息 + 原始 error），handler 里只有一句 `ctx.JSON(ei.StatusCode(), ei.ErrorMessage())`。
+4. **依赖只向下** —— 基础层不知道存储层，存储层不知道 HTTP 层；`cmd/`、`_examples/`、`docs/` 可以依赖库，库永不反向依赖它们。
 
-`cmd/` 只放入口，命令实现在 `internal/`（外部看不到，可以随便改），其余目录都是对外库代码。以 `_` 开头的目录会被 Go 工具链忽略，用来放不参与 `./...` 构建的示例与预留位；`docs/` 只放 Markdown，代码一律留在 `_examples/` 里，便于直接打开和运行。
+目录约定：`cmd/` 只放入口，命令实现在 `internal/`（外部不可 import）；以 `_` 开头的目录会被 Go 工具链忽略，用于存放不参与 `./...` 构建的示例与预留位；`docs/` 只放 Markdown，代码一律留在 `_examples/` 里。
 
 ## 包索引
 
@@ -177,19 +133,7 @@ go get github.com/zq-xu/gotools@latest
 
 ## 文档
 
-| 文档 | 内容 |
-| --- | --- |
-| [docs/README.md](docs/README.md) | 文档索引与阅读路径 |
-| [docs/01-quickstart.md](docs/01-quickstart.md) | 从零跑通一个最小 HTTP 服务 |
-| [docs/02-rest-api-service.md](docs/02-rest-api-service.md) | 示例服务 A：带 JWT 与审计的账号 REST API |
-| [docs/03-worker-service.md](docs/03-worker-service.md) | 示例服务 B：队列 + Worker 后台任务服务 |
-| [docs/04-cli-service.md](docs/04-cli-service.md) | 示例服务 C：cobra 命令行工具 |
-| [docs/05-config-and-logging.md](docs/05-config-and-logging.md) | 配置装配机制与日志 |
-| [docs/06-database.md](docs/06-database.md) | Model 约定、CRUD、事务、分页与排序 |
-| [docs/07-http.md](docs/07-http.md) | 引擎装配、路由组、中间件链、优雅关闭 |
-| [docs/08-auth-and-audit.md](docs/08-auth-and-audit.md) | JWT 认证、角色校验、审计日志与导出 |
-| [docs/09-crypto.md](docs/09-crypto.md) | AES 加解密装配与密钥管理 |
-| [docs/10-websocket.md](docs/10-websocket.md) | Hub 模式连接管理与消息广播 |
+按场景组织在 [`docs/`](docs/README.md)，从 [docs/01-quickstart.md](docs/01-quickstart.md) 入手，完整索引与阅读路径见 [docs/README.md](docs/README.md)。
 
 ## CLI
 
@@ -222,12 +166,10 @@ go vet ./...
 
 ## 已知限制
 
-写文档时如实列出，避免使用时踩坑：
-
-- **JWT 参数写死**：`routerx/auth` 里 `Key` 是常量 `"secret key"`、`Timeout` 为 1 小时，且没有配置段。用于真实环境前需要改这里或自行替换中间件。
-- **`apix.ListByRawGormHandler` 的计数与列表可能不一致**：总数走 `GetCount(模型)`，不包含 `queryFn` 里附加的 `WHERE`；如果 raw query 带额外条件，需要自己实现计数。
-- **`processor.Done()` 通道目前没有写入方**：拿它做完成信号不会触发，请用 `DoneLength()` / `WorkerOverview()` 观察进度。
-- **错误响应体是 JSON 字符串**：`ctx.JSON(status, ei.ErrorMessage())` 会输出 `"message"` 而不是 `{"error":"message"}`，需要统一结构就在 handler 里包一层。
-- **模型 ID 的 machine ID 固定为 128**：`utilsx` 里的 sonyflake 实例写死了 machine ID，单机安全，多台机器同时往同一张表写入时 ID 段会重叠。
-- **`configx` 缺段时向 stdout 打印一行提示**：`empty config found for <name>`，不影响运行，但会混进标准输出。
-- **`websocket` 不做鉴权**：`CheckOrigin` 恒返回 true，握手前需要自己校验 token。
+- **JWT 参数写死**：`routerx/auth` 的 `Key` 为常量 `"secret key"`、超时 1 小时且无配置段，真实环境使用前需修改或自行替换中间件。
+- **`apix.ListByRawGormHandler` 计数可能与列表不一致**：总数走 `GetCount(模型)`，不含 `queryFn` 附加的 `WHERE`；带额外条件时需自行实现计数。
+- **`processor.Done()` 没有写入方**：不能作为完成信号，请用 `DoneLength()` / `WorkerOverview()` 观察进度。
+- **错误响应体是 JSON 字符串**：`ctx.JSON(status, ei.ErrorMessage())` 输出 `"message"` 而非 `{"error":"message"}`，需要统一结构请在 handler 里包一层。
+- **模型 ID 的 machine ID 固定为 128**：sonyflake 实例写死 machine ID，单机安全，多机写同一张表时 ID 段会重叠。
+- **`configx` 缺段时向 stdout 打印提示**：`empty config found for <name>`，不影响运行但会混入标准输出。
+- **`websocket` 不做鉴权**：`CheckOrigin` 恒返回 true，握手前需自行校验 token。
