@@ -1,0 +1,91 @@
+# ==========================================
+# 1. 依赖与第三方库（大文件重灾区）
+# ==========================================
+node_modules/
+vendor/
+.venv/
+venv/
+env/
+ENV/
+deps/
+_opam/
+.elixir_ls/
+
+# ==========================================
+# 2. 构建产物与打包输出
+# ==========================================
+dist/
+build/
+out/
+.next/
+.nuxt/
+.vuepress/
+.output/
+target/
+bin/
+obj/
+pkg/
+*.egg-info/
+.eggs/
+
+# ==========================================
+# 3. 锁文件（包含海量依赖明细，极其消耗 Token）
+# ==========================================
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+Bun.lockb
+Composer.lock
+Cargo.lock
+Gemfile.lock
+poetry.lock
+Pipfile.lock
+
+# ==========================================
+# 4. 版本控制与编辑器隐形配置文件
+# ==========================================
+.git/
+.svn/
+.hg/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# 5. 日志、缓存与覆盖率报告
+# ==========================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.cache/
+.parcel-cache/
+.turbo/
+coverage/
+.coverage
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+
+# ==========================================
+# 6. 数据库文件、媒体与大文件
+# ==========================================
+*.sqlite
+*.sqlite3
+*.db
+*.bin
+*.tar.gz
+*.zip
+*.7z
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.pdf
